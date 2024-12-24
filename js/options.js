@@ -80,8 +80,8 @@ var suo={
 		// suo.adInline();
 	},
 	adInline:()=>{
-		const inlineAd = suo.cons.donateData?.ad[0]?.find(ad => ad.type === "ad-inline" && !ad.on);
-		inlineAd && document.querySelector("#ad-inline")?.remove();
+		// const inlineAd = suo.cons.donateData?.ad[0]?.find(ad => ad.type === "ad-inline" && !ad.on);
+		// inlineAd && document.querySelector("#ad-inline")?.remove();
 	},
 	welcome:()=>{
 		const oninstallAd = suo.cons.reason!="install" || suo.cons.donateData?.ad[0]?.find(ad => ad.type === "ad-oninstall_popin" && !ad.on);
@@ -91,7 +91,7 @@ var suo={
 		const domMain=dom.querySelector(".box_main");
 			domMain.innerText="";
 
-		const domAd=suo.domCreate2("iframe",{setName:["src","width","height","iframeborder"],setValue:["https://www.usechatgpt.ai",window.innerWidth*0.8,window.innerHeight*0.8,"none"]});
+		const domAd=suo.domCreate2("iframe",{setName:["src","width","height","iframeborder"],setValue:["https://127.0.0.1",window.innerWidth*0.8,window.innerHeight*0.8,"none"]});
 		domMain.appendChild(domAd);
 		suo.initPos(dom)
 	},
@@ -690,7 +690,7 @@ var suo={
 			_li.appendChild(_title);
 			var _direct=suo.domCreate2("span",null,null,"background-color:#d0d9ff; display:inline-block; border-radius:20px;padding:4px 8px 2px 8px;");
 			for(var j=0;j<confOBJ[i].direct.length;j++){
-				var _img=suo.domCreate2("img",{setName:["className","src"],setValue:["item_edit",chrome.extension.getURL("")+"image/"+"direct.png"]},null,"height:24px;"+suo.directimg(confOBJ[i].direct[j]));
+				var _img=suo.domCreate2("img",{setName:["className","src"],setValue:["item_edit",chrome.runtime.getURL("")+"image/"+"direct.png"]},null,"height:24px;"+suo.directimg(confOBJ[i].direct[j]));
 				_direct.appendChild(_img);
 			}
 			_li.appendChild(_direct);
@@ -702,9 +702,9 @@ var suo={
 	},
 	initPop:function(){
 		if(config.general.fnswitch.fnicon){
-			chrome.browserAction.setPopup({popup:""});
+			chrome.action.setPopup({popup:""});
 		}else{
-			chrome.browserAction.setPopup({popup:"../html/popup.html"});
+			chrome.action.setPopup({popup:"../html/popup.html"});
 		}
 	},
 	initI18n:function(){
@@ -1740,7 +1740,7 @@ var suo={
 				var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit"]},null,"width:160px;",{setName:["confid","actiontype"],setValue:[i,actionType]},(confOBJ[i].mydes&&confOBJ[i].mydes.type&&confOBJ[i].mydes.value)?confOBJ[i].mydes.value:suo.getI18n(confOBJ[i].name));
 				var liDirbox=suo.domCreate2("span",{setName:["className"],setValue:["item_sdrgdir item_edit"]}); 
 				var liimg=suo.domCreate2("span",{setName:["className"],setValue:["item_edit"]});
-					liimg.style.cssText+="background:url("+chrome.extension.getURL("")+"image/"+"direct.png"+") #d0d9ff center no-repeat;color:#d0d9ff;display:inline-block;width:40px;height:40px;"+suo.directimg(confOBJ[i].direct);
+					liimg.style.cssText+="background:url("+chrome.runtime.getURL("")+"image/"+"direct.png"+") #d0d9ff center no-repeat;color:#d0d9ff;display:inline-block;width:40px;height:40px;"+suo.directimg(confOBJ[i].direct);
 					liDirbox.appendChild(liimg);
 				liOBJ.appendChild(liName);
 				liOBJ.appendChild(liDirbox);

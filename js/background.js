@@ -1,3 +1,6 @@
+importScripts("purify.js");
+importScripts("gbk.js");
+
 Array.prototype.contains=function (ele) {
     for (var i=0;i<this.length;i++){
         if (this[i]==ele){
@@ -806,7 +809,7 @@ var getDefault={
 				},
 				about:{
 					donatedev:{
-						ad:true
+						ad:false
 					}
 				}
 			}	
@@ -837,7 +840,7 @@ let loadLocalConfig=function(){
 		localConfig=items.local;
 	})
 }
-let loadConfig=function(noInit,type){
+let loadConfig=async function(noInit,type){
 	function needInit(){
 		//if(!config.version){config.version=37;}
 		sub.init();
@@ -850,15 +853,16 @@ let loadConfig=function(noInit,type){
 	}
 	if(!type){
 		if(chrome.storage.sync){
-			if(localStorage.getItem("sync")==null){
-				localStorage.setItem("sync","true");
+			const result = await chrome.storage.sync.get(["sync"]);
+			if (result.sync === undefined) {
+				await chrome.storage.sync.set({ "sync": "true" });
 				type="sync";
-			}else{
-				type=localStorage.getItem("sync")=="true"?"sync":"local";
+			} else {
+				type = result.sync == "true" ? "sync" : "local";
 			}
 		}else{
-			localStorage.setItem("sync","false");
-			type="local";
+			await chrome.storage.local.set({ "sync": "false" });
+			type = "local";
 		}
 	}
 	if(type=="sync"){
@@ -896,7 +900,7 @@ let loadConfig=function(noInit,type){
 }
 
 var appConfmodel={
-	rss:{feed:["https://www.cnet.com/rss/news/"],n_optype:"s_back",n_position:"s_default",n_pin:false,n_closebox:false},
+	rss:{feed:["https://127.0.0.1/"],n_optype:"s_back",n_position:"s_default",n_pin:false,n_closebox:false},
 	tablist:{n_closebox:true},
 	recentbk:{n_optype:"s_back",n_position:"s_default",n_pin:false,n_num:10,n_closebox:false},
 	recentht:{n_optype:"s_back",n_position:"s_default",n_pin:false,n_num:10,n_closebox:false},
@@ -905,7 +909,7 @@ var appConfmodel={
 	recentclosed:{n_num:10,n_closebox:true},
 	synced:{n_closebox:true},
 	jslist:{n_closebox:true},
-	homepage:{n_optype:"s_new",n_position:"s_default",n_pin:false,n_closebox:true,n_homepage_icon:true,n_homepage_bg:true,n_homepage_resize:true,n_homepage_last:true,type:"topsites",sitegroup:[chrome.i18n.getMessage("homepage_groupdefault")],sites:[[{title:"smartUp Gestures",url:"https://smartup.zimoapps.com/"}]],site:[{title:"Google",url:"https://www.google.com"}]},
+	homepage:{n_optype:"s_new",n_position:"s_default",n_pin:false,n_closebox:true,n_homepage_icon:true,n_homepage_bg:true,n_homepage_resize:true,n_homepage_last:true,type:"topsites",sitegroup:[chrome.i18n.getMessage("homepage_groupdefault")],sites:[[{title:"smartUp Gestures",url:"https://127.0.0.1/"}]],site:[{title:"Google",url:"https://www.google.com"}]},
 	tbkjx:{n_num:50,n_optype:"s_new",n_position:"s_default",n_pin:false},
 	extmgm:{n_uninstallconfirm:true,n_enableallconfirm:true,n_disableallconfirm:true,always:[]/*,group:[chrome.i18n.getMessage("extmgm_gplast"),chrome.i18n.getMessage("extmgm_gpalways")],exts:[]*/},
 	notepad:{
@@ -930,7 +934,7 @@ var sub={
 		fullstate:null,
 		per_write:false,
 		scroll:{},
-		crversion:(window.navigator.userAgent.substr(window.navigator.userAgent.indexOf("Chrome")+7,100).substr(0,window.navigator.userAgent.substr(window.navigator.userAgent.indexOf("Chrome")+7,100).indexOf(" "))),
+		crversion:(navigator.userAgent.substr(navigator.userAgent.indexOf("Chrome")+7,100).substr(0,navigator.userAgent.substr(navigator.userAgent.indexOf("Chrome")+7,100).indexOf(" "))),
 		permissions:{},
 		os:"win"
 	},
@@ -971,13 +975,13 @@ var sub={
 	},
 	initIcon:function(){
 		if(config.general.fnswitch.fnicon){
-			chrome.browserAction.setPopup({popup:""});
+			chrome.action.setPopup({popup:""});
 			if(config.icon.settings.tip){
-				chrome.browserAction.setTitle({title:config.icon.actions[0].mydes&&config.icon.actions[0].mydes.type&&config.icon.actions[0].mydes.value?config.icon.actions[0].mydes.value:sub.getI18n(config.icon.actions[0].name)});
+				chrome.action.setTitle({title:config.icon.actions[0].mydes&&config.icon.actions[0].mydes.type&&config.icon.actions[0].mydes.value?config.icon.actions[0].mydes.value:sub.getI18n(config.icon.actions[0].name)});
 			}
 		}else{
-			chrome.browserAction.setPopup({popup:"../html/popup.html"});
-			chrome.browserAction.setTitle({title:sub.getI18n("ext_name")});
+			chrome.action.setPopup({popup:"../html/popup.html"});
+			chrome.action.setTitle({title:sub.getI18n("ext_name")});
 		}
 	},
 	initCTM:function(){
@@ -1058,17 +1062,27 @@ var sub={
 			sub.action.optionspage();
 		}
 		if(info.menuItemId==sub.ctm.menuHomepage){
-			chrome.tabs.query({highlighted:true,currentWindow:true},function(tabs){
-				var theFunction=function(){
+			chrome.tabs.query({highlighted:true,currentWindow:true},async function(tabs){
+				var theFunction=async function(){
 					var _appname="homepage";
-					sub.initAppconf(_appname);
-					chrome.topSites.get(function(sites){
+					await sub.initAppconf(_appname);
+					chrome.topSites.get(async function(sites){
 						let _obj={};
 							_obj.sites=sites;
-							_obj.listId=localStorage.getItem("homepageListId");
+							_obj.listId=await new Promise((resolve, reject) => {
+								chrome.storage.local.get(["homepageListId"], (result) => {
+									resolve(result.homepageListId);
+								});
+							});
 							_obj.ctm=tab;
 						sub.cons[_appname]=_obj;
-						chrome.tabs.executeScript({code:'chrome.runtime.sendMessage({type:"apps_test",apptype:"'+_appname+'",value:sue.apps.enable,ctm:true,appjs:appType["'+_appname+'"]},function(response){console.log(response)})',runAt:"document_start"});
+						chrome.scripting.executeScript({
+							target: { tabId: tab.id },
+							args: [_appname],
+							func: function () {
+								chrome.runtime.sendMessage({type:"apps_test",apptype:_appname,value:sue.apps.enable,ctm:true,appjs:appType[_appname]},function(response){console.log(response)});
+							}
+						});
 					});
 				}
 				var thepers=["topSites"];
@@ -1284,7 +1298,15 @@ var sub={
 	insertTest:function(appname){
 		//console.log("appname")
 		//chrome.tabs.sendMessage(curTab.id,{type:"apptype",apptype:appname},function(response){});
-		chrome.tabs.executeScript({code:'chrome.runtime.sendMessage({type:"apps_test",apptype:"'+appname+'",value:sue.apps.enable,appjs:appType["'+appname+'"]},function(response){console.log(response)})',runAt:"document_start"});	
+		chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+			chrome.scripting.executeScript({
+				target: { tabId: tabs[0].id },
+				args: [appname],
+				func: function (appname) {
+					chrome.runtime.sendMessage({type:"apps_test",apptype:appname,value:sue.apps.enable,appjs:appType[appname]},function(response){console.log(response)});
+				}
+			});
+		});
 	},
 	checkPermission:function(thepers,theorgs,theFunction,msg){
 		console.log(thepers+"/"+theorgs+"/"+theFunction+"/"+msg)
@@ -1318,11 +1340,11 @@ var sub={
 	setIcon:function(status,tabId,changeInfo,tab){
 		switch(status){
 			case"normal":
-				//chrome.browserAction.setIcon({tabId:tab.id,path:"../image/icon_bar.png"});
+				//chrome.action.setIcon({tabId:tab.id,path:"../image/icon_bar.png"});
 				break;
 			case"warning":
-				chrome.browserAction.setIcon({tabId:tab.id,path:"../image/icon_warning.png"});
-				chrome.browserAction.setTitle({tabId:tab.id,title:sub.getI18n("icon_tip")});
+				chrome.action.setIcon({tabId:tab.id,path:"../image/icon_warning.png"});
+				chrome.action.setTitle({tabId:tab.id,title:sub.getI18n("icon_tip")});
 				break;
 		}
 		//chrome.pageAction.show(tabId);
@@ -1365,17 +1387,36 @@ var sub={
 		},
 		//group nav
 		back:function(){//chk
-			chrome.tabs.executeScript({code:"window.history.go(-1)",runAt:"document_start"},function(){})
+			chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+				chrome.scripting.executeScript({
+					target: { tabId: tabs[0].id },
+					func: function () {
+						window.history.go(-1);
+					}
+				});
+			});
 		},
 		forward:function(){//chk
-			chrome.tabs.executeScript({code:"window.history.go(+1)",runAt:"document_start"},function(){})
+			chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+				chrome.scripting.executeScript({
+					target: { tabId: tabs[0].id },
+					func: function () {
+						window.history.go(+1);
+					}
+				});
+			});
 		},
 		scroll:function(){
 			var _effect=sub.getConfValue("checks","n_effect"),
 				_scroll=sub.getConfValue("selects","n_scroll").substr(2);
 			sub.cons.scroll.effect=_effect;
 			sub.cons.scroll.type=_scroll;//scrolltype;//sub.theConf.name;
-			chrome.tabs.executeScript({file:"js/inject/scroll.js",runAt:"document_start",allFrames:true},function(){})
+			chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+				chrome.scripting.executeScript({
+					target: { tabId: tabs[0].id },
+					files: ["js/inject/scroll.js"]
+				});
+			});
 		},
 		reload:function(){//chk
 			var ids=sub.getId(sub.getConfValue("selects","n_tab"));
@@ -1383,7 +1424,12 @@ var sub={
 			//fix edge
 			if(!chrome.tabs.reload){
 				for(var i=0;ids&&i<ids.length;i++){
-					chrome.tabs.executeScript(ids[i],{code:"location.reload();"});
+					chrome.scripting.executeScript({
+						target: { tabId: ids[i] },
+						func: function () {
+							location.reload();
+						}
+					});
 				}
 			}
 			for(var i=0;ids&&i<ids.length;i++){
@@ -1393,7 +1439,12 @@ var sub={
 		stop:function(){//chk
 			var ids=sub.getId(sub.getConfValue("selects","n_tab"));
 			for(var i=0;ids&&i<ids.length;i++){
-				chrome.tabs.executeScript(ids[i],{code:"window.stop()",runAt:"document_start"},function(){})
+				chrome.scripting.executeScript({
+					target: { tabId: ids[i] },
+					func: function () {
+						window.stop();
+					}
+				});
 			}
 		},
 		next:function(){
@@ -1406,8 +1457,12 @@ var sub={
 				sub.cons.next.pin=sub.getConfValue("checks","n_pin");
 				sub.cons.next.optype=sub.getConfValue("selects","n_optype");
 				sub.cons.next.keywds=(sub.getConfValue("texts","n_npkey_n")||sub.getConfValue("texts","n_npkey_p")).split(",");
-				chrome.tabs.executeScript({file:"js/namespace.js",runAt:"document_start",allFrames:true},function(){})	
-				chrome.tabs.executeScript({file:"js/inject/np.js",runAt:"document_start",allFrames:true},function(){})				
+				chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+					chrome.scripting.executeScript({
+						target: { tabId: tabs[0].id },
+						files: ["js/namespace.js", "js/inject/np.js"]
+					});
+				});
 			}
 		},
 		previous:function(){
@@ -2099,7 +2154,12 @@ var sub={
 		},
 		copyimg:function(){
 			if(!sub.message.selEle.img){return;}
-			chrome.tabs.executeScript({file:"js/inject/copyimg.js",runAt:"document_start",allFrames:true},function(){})
+			chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+				chrome.scripting.executeScript({
+					target: { tabId: tabs[0].id },
+					files: ["js/inject/copyimg.js"]
+				});
+			});
 		},
 		imgsearch:function(){
 			if(!sub.message.selEle.img){return;}
@@ -2183,8 +2243,14 @@ var sub={
 			chrome.runtime.reload();
 		},
 		closeapps:function(){
-			let _code='(function(){let eles=document.querySelectorAll("smartup.su_apps");let _fun=function(ele){window.setTimeout(function(){ele.remove();},500)};for(var i=0;i<eles.length;i++){eles[i].style.cssText+="transition:all .4s ease-in-out;opacity:0;top:0;";_fun(eles[i]);};}())'
-			chrome.tabs.executeScript({code:_code});
+			chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+				chrome.scripting.executeScript({
+					target: { tabId: tabs[0].id },
+					func: function () {
+						(function(){let eles=document.querySelectorAll("smartup.su_apps");let _fun=function(ele){window.setTimeout(function(){ele.remove();},500)};for(var i=0;i<eles.length;i++){eles[i].style.cssText+="transition:all .4s ease-in-out;opacity:0;top:0;";_fun(eles[i]);};}());
+					}
+				});
+			});
 		},
 		dldir:function(){
 			var theFunction=function(){
@@ -2228,7 +2294,15 @@ var sub={
 		},
 		script:function(){
 			var _script=sub.getConfValue("selects","n_script");
-			chrome.tabs.executeScript({code:config.general.script.script[_script].content,runAt:"document_start"},function(){})
+			chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+				chrome.scripting.executeScript({
+					target: { tabId: tabs[0].id },
+					args: [_script],
+					func: function () {
+						config.general.script.script[_script].content;
+					}
+				});
+			});
 		},
 		source:function(){
 			var theTarget=sub.getConfValue("selects","n_optype"),
@@ -2240,7 +2314,12 @@ var sub={
 		zoom:function(){
 			if(!chrome.tabs.setZoom){
 				sub.cons.zoom=sub.getConfValue("selects","n_zoom");
-				chrome.tabs.executeScript({file:"js/inject/zoom.js",runAt:"document_start"},function(){})
+				chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+					chrome.scripting.executeScript({
+						target: { tabId: tabs[0].id },
+						files: ["js/inject/zoom.js"]
+					});
+				});
 			}else{
 				var factorDefault=1;
 				console.log(sub.getConfData("checks","c_factor"));
@@ -2341,7 +2420,14 @@ var sub={
 			}
 		},
 		print:function(){
-			chrome.tabs.executeScript({code:"window.print()",runAt:"document_start"},function(){})
+			chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+				chrome.scripting.executeScript({
+					target: { tabId: tabs[0].id },
+					func: function () {
+						window.print();
+					}
+				});
+			});
 		},
 
 		zoom_dep:function(){
@@ -2350,7 +2436,12 @@ var sub={
 					sub.cons.zoom=sub.theConf.selects[i].value;
 				}
 			}
-			chrome.tabs.executeScript({file:"js/inject/zoom.js",runAt:"document_start"},function(){})
+			chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+				chrome.scripting.executeScript({
+					target: { tabId: tabs[0].id },
+					files: ["js/inject/zoom.js"]
+				});
+			});
 		},
 		mute:function(){
 			var ids=[];
@@ -2479,21 +2570,25 @@ var sub={
 			sub.initAppconf(_appname);
 			sub.insertTest(_appname);
 		},
-		homepage:function(){
-			var theFunction=function(){
+		homepage:async function(){
+			var theFunction=async function(){
 				var _appname="homepage";
-				sub.initAppconf(_appname);
-				chrome.topSites.get(function(sites){
+				await sub.initAppconf(_appname);
+				chrome.topSites.get(async function(sites){
 					let _obj={};
 						_obj.sites=sites;
-						_obj.listId=localStorage.getItem("homepageListId");
+						_obj.listId=await new Promise((resolve, reject) => {
+							chrome.storage.local.get(["homepageListId"], (result) => {
+								resolve(result["homepageListId"]);
+							});
+						});
 					sub.cons[_appname]=_obj;
 					sub.insertTest(_appname);
 				});
 			}
 			var thepers=["topSites"];
 			var theorgs;
-			sub.checkPermission(thepers,theorgs,theFunction);		
+			await sub.checkPermission(thepers,theorgs,theFunction);
 		},
 		autoreload:function(){
 			var _appname="autoreload";
@@ -2872,7 +2967,7 @@ var sub={
 			sub.cons.origins=pers.origins;
 		});
 	},
-	saveConf:function(noInit,sendResponse){
+	saveConf:async function(noInit,sendResponse){
 		console.log("save");
 		console.log(config);
 		let _isSync;
@@ -2881,7 +2976,7 @@ var sub={
 		}else{
 			_isSync=false;
 		}
-		_isSync?localStorage.setItem("sync","true"):localStorage.setItem("sync","false");
+		await chrome.storage.sync.set({ "sync": _isSync.toString() });
 		if(_isSync){
 			chrome.storage.sync.clear(function(){
 				chrome.storage.sync.set(config,function(){
@@ -3184,7 +3279,7 @@ var sub={
 		},
 		_34:function(){
 			config.general.sync.autosync=true;
-			localStorage.setItem("first","true");
+			chrome.storage.local.set({ "first": "true" });
 			chrome.storage.local.get(function(items){
 				if(items&items.apps){
 					items.local={};
@@ -3208,7 +3303,7 @@ var sub={
 		},
 		_33:function(){
 			config.general.sync.autosync=true;
-			localStorage.setItem("first","true");
+			chrome.storage.local.set({ "first": "true" });
 			chrome.storage.local.get(function(items){
 				if(items&items.apps){
 					items.local={};
@@ -3797,43 +3892,100 @@ var sub={
 			case"apps_test":
 				let _fun=function(){
 					if(message.appjs){
-						chrome.tabs.executeScript({code:"sue.apps['"+message.apptype+"'].initUI();",runAt:"document_start"});
-						return;
-					}
-					if(message.apptype=="base64"){
-						chrome.tabs.executeScript({file:"js/base64.js",runAt:"document_start"},function(){})
-					}else if(message.apptype=="qr"||message.apptype=="magnet"||message.apptype=="shorturl"){
-						chrome.tabs.executeScript({file:"js/qrcode.js",runAt:"document_start"},function(){})
-					}else if(message.apptype=="tbkjx"){
-						chrome.tabs.executeScript({file:"js/purify.js",runAt:"document_start"},function(){});
-						chrome.tabs.executeScript({file:"js/qrcode.js",runAt:"document_start"},function(){});
-					}else if(message.apptype=="notepad"){
-						chrome.tabs.executeScript({file:"js/md5.js",runAt:"document_start"});
-					}
-
-					// insert sortable.js
-					let arraySort=["homepage","appslist","jslist","extmgm"];
-					if(arraySort.contains(message.apptype)){
-						chrome.tabs.executeScript({file:"js/sortable.js",runAt:"document_start"},function(){
-							chrome.tabs.insertCSS({file:"css/inject/"+message.apptype+".css",runAt:"document_start"},function(){});
-							chrome.tabs.executeScript({file:"js/inject/"+message.apptype+".js",runAt:"document_start"},function(){
-								//after insert js, run sue.apps.homepage.itemCTM() for miniapps-homepage
-								if(message.apptype=="homepage"&&message.ctm){
-									chrome.tabs.executeScript({code:"sue.apps['"+message.apptype+"'].itemCTM();",runAt:"document_start"});
+						chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+							chrome.scripting.executeScript({
+								target: { tabId: tabs[0].id },
+								func: function () {
+									sue.apps[message.apptype].initUI();
 								}
 							});
 						});
 						return;
 					}
+					if(message.apptype=="base64"){
+						chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+							chrome.scripting.executeScript({
+								target: { tabId: tabs[0].id },
+								files: ["js/base64.js"]
+							});
+						});
+					}else if(message.apptype=="qr"||message.apptype=="magnet"||message.apptype=="shorturl"){
+						chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+							chrome.scripting.executeScript({
+								target: { tabId: tabs[0].id },
+								files: ["js/qrcode.js"]
+							});
+						});
+					}else if(message.apptype=="tbkjx"){
+						chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+							chrome.scripting.executeScript({
+								target: { tabId: tabs[0].id },
+								files: ["js/purify.js", "js/qrcode.js"]
+							});
+						});
+					}else if(message.apptype=="notepad"){
+						chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+							chrome.scripting.executeScript({
+								target: { tabId: tabs[0].id },
+								files: ["js/md5.js"]
+							});
+						});
+					}
 
-					chrome.tabs.insertCSS({file:"css/inject/"+message.apptype+".css",runAt:"document_start"},function(){});
-					chrome.tabs.executeScript({file:"js/inject/"+message.apptype+".js",runAt:"document_start"},function(){
+					// insert sortable.js
+					let arraySort=["homepage","appslist","jslist","extmgm"];
+					if(arraySort.contains(message.apptype)){
+						chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+							chrome.scripting.executeScript({
+								target: { tabId: tabs[0].id },
+								files: ["js/sortable.js"]
+							}, function () {
+								chrome.scripting.insertCSS({
+									target: { tabId: tabs[0].id },
+									files: ["css/inject/"+message.apptype+".css"]
+								});
+								chrome.scripting.executeScript({
+									//after insert js, run sue.apps.homepage.itemCTM() for miniapps-homepage
+									target: { tabId: tabs[0].id },
+									files: ["js/inject/"+message.apptype+".js"]
+								}, function () {
+									if(message.apptype=="homepage"&&message.ctm){
+										chrome.scripting.executeScript({
+											target: { tabId: tabs[0].id },
+											func: function () {
+												sue.apps[message.apptype].itemCTM();
+											}
+										});
+									}
+								});
+							});
+						});
+						return;
+					}
 
+					chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+						chrome.scripting.insertCSS({
+							target: { tabId: tabs[0].id },
+							files: ["css/inject/"+message.apptype+".css"]
+						});
+						chrome.scripting.executeScript({
+							target: { tabId: tabs[0].id },
+							files: ["js/inject/"+message.apptype+".js"]
+						});
 					});
-				}		
+
+				}
 				if(!message.value){
-					chrome.tabs.insertCSS({file:"css/apps_basic.css",runAt:"document_start"},function(){})
-					chrome.tabs.executeScript({file:"js/apps_basic.js",runAt:"document_start"},function(){_fun();})
+					chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+						chrome.scripting.insertCSS({
+							target: { tabId: tabs[0].id },
+							files: ["css/apps_basic.css"]
+						});
+						chrome.scripting.executeScript({
+							target: { tabId: tabs[0].id },
+							files: ["js/apps_basic.js"]
+						});
+					});
 				}else{
 					_fun();
 				}
@@ -4028,10 +4180,10 @@ var sub={
 					sub.cons.autoreload[sender.tab.id].bypassCache=message.value.bypassCache;
 					
 					if(sub.cons.autoreload[sender.tab.id].iconCountdown){
-						chrome.browserAction.setBadgeText({text:sub.cons.autoreload[sender.tab.id].timeRemain.toString(),tabId:sender.tab.id});
+						chrome.action.setBadgeText({text:sub.cons.autoreload[sender.tab.id].timeRemain.toString(),tabId:sender.tab.id});
 						sub.cons.autoreload[sender.tab.id].countDown=window.setInterval(function(){
 							sub.cons.autoreload[sender.tab.id].timeRemain--;
-							chrome.browserAction.setBadgeText({text:sub.cons.autoreload[sender.tab.id].timeRemain.toString(),tabId:sender.tab.id});
+							chrome.action.setBadgeText({text:sub.cons.autoreload[sender.tab.id].timeRemain.toString(),tabId:sender.tab.id});
 						},1000);
 					}else{
 						sub.cons.autoreload[sender.tab.id].countDown=window.setInterval(function(){
@@ -4052,7 +4204,7 @@ var sub={
 					window.clearInterval(sub.cons.autoreload[sender.tab.id].countDown);
 					sub.cons.autoreload[sender.tab.id].timeRemain=0;
 				}
-				chrome.browserAction.setBadgeText({text:"",tabId:sender.tab.id});
+				chrome.action.setBadgeText({text:"",tabId:sender.tab.id});
 			},
 			getConf:function(message,sender,sendResponse){
 				sendResponse({config:config.apps[message.app],value:sub.cons[message.app],tabId:sender.tab.id});
@@ -4118,7 +4270,15 @@ var sub={
 		},
 		jslist:{
 			jsRun:function(message){
-				chrome.tabs.executeScript({code:config.general.script.script[message.value].content,runAt:"document_start"})
+				chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+					chrome.scripting.executeScript({
+						target: { tabId: tabs[0].id },
+						args: [message],
+						func: function () {
+							config.general.script.script[message.value].content;
+						}
+					});
+				});
 			}
 		},
 		appslist:{
@@ -4419,10 +4579,12 @@ var sub={
 						copyrightString:DOMPurify.sanitize(data.querySelector("images>image>copyright").textContent).toString(),
 						copyrightURL:DOMPurify.sanitize(data.querySelector("images>image>copyrightlink").textContent).toString()
 					};
-					if(localStorage.getItem("homepageURL")!=_data.imageURL){
-						chrome.tabs.sendMessage(sender.tab.id,{type:"imageURL",value:_data});
-						sub.apps.homepage.getImage(message,sender,sendResponse,_data);
-					}
+					chrome.storage.sync.get(["homepageURL"], function (result) {
+						if (result.homepageURL != _data.imageURL) {
+							chrome.tabs.sendMessage(sender.tab.id,{type:"imageURL",value:_data});
+							sub.apps.homepage.getImage(message,sender,sendResponse,_data);
+						}
+					});
 				} catch(e) {
 					console.log(e.toString());
 				}
@@ -4437,14 +4599,16 @@ var sub={
 					(async function(){
 						let db=await sub.IDB.DBGet("homepage");
 						await sub.IDB.itemModify(db,"bingimg",0,data);
-						if(localStorage.getItem("homepageURL")!=data.imageURL){
-							localStorage.setItem("homepageURL",data.imageURL);
-						}						
+						chrome.storage.sync.get(["homepageURL"], function (result) {
+							if (result.homepageURL != data.imageURL) {
+								chrome.storage.sync.set({"homepageURL":data.imageURL});
+							}
+						});
 					})();
 				}
 			},
 			setListId:function(message,sender,sendResponse){
-				localStorage.setItem("homepageListId",message.value);
+				chrome.storage.local.set({"homepageListId":message.value});
 			}
 		},
 		tbkjx:{
@@ -4457,13 +4621,15 @@ var sub={
 					_configURL="https://quan.zimoapps.com/push/config.json"+"?"+sub.date.getTime();
 				fetch(_configURL)
 					.then(response=>response.json())
-					.then(json=>{
+					.then(async json=>{
 						console.log(_configURL);
-						if(!localStorage.getItem("tbkjx_dataversion")||Number(json.version)>=sub.date.get()){
+						const result = await chrome.storage.sync.get(["tbkjx_dataversion"]);
+						const tbkjx_dataversion = result.tbkjx_dataversion;
+						if(!tbkjx_dataversion||Number(json.version)>=sub.date.get()){
 							_url=_url+"?"+sub.date.get().toString();
-							localStorage.setItem("tbkjx_dataversion",json.version);
+							await chrome.storage.sync.set({ "tbkjx_dataversion": json.version });
 						}else{
-							_url=_url+"?"+localStorage.getItem("tbkjx_dataversion");
+							_url=_url+"?"+tbkjx_dataversion;
 						}
 						console.log(_url);
 						fetch(_url)
@@ -4654,7 +4820,7 @@ var sub={
 	}
 }
 
-chrome.browserAction.onClicked.addListener(function(tab){
+chrome.action.onClicked.addListener(function(tab){
 	if(config.icon.settings.type=="back"){
 		//sub.extID=chrome.runtime.id?chrome.runtime.id:null;
 		var theConf=config.icon.actions[0];
@@ -4692,7 +4858,10 @@ else{
 		chrome.windows.getAll({populate:true},function(windows){
 			for(var i=0;i<windows.length;i++){
 				for(var ii=0;ii<windows[i].tabs.length;ii++){
-					chrome.tabs.executeScript(windows[i].tabs[ii].id,{file:"js/event.js",runAt:"document_start",allFrames:true})
+					chrome.scripting.executeScript({
+						target: { tabId: windows[i].tabs[ii].id },
+						files: ["js/event.js"]
+					});
 				}
 			}
 		})
@@ -4750,7 +4919,7 @@ if(!chrome.notifications){}
 else{
 	console.log("ssss")
 	chrome.notifications.onClicked.addListener(function(id){
-		localStorage.setItem("showlog","true");
+		chrome.storage.local.set({ "showlog": "true" });
 		chrome.tabs.create({url:"../html/options.html"});
 	})
 	chrome.notifications.onButtonClicked.addListener(function(id,index){
@@ -4828,7 +4997,7 @@ if(chrome.browserSettings&&chrome.browserSettings.contextMenuShowEvent){
 
 getDonate=()=>{
 	let localType=navigator.language,
-		_url="https://apis.zimoapps.com/su";
+		_url="https://127.0.0.1/su";
 		// _url="http://172.30.246.4:1024/su";
 	localType=localType.replace("-","_");
 	fetch(_url,{
@@ -4862,5 +5031,5 @@ getDonate=()=>{
 		console.log(sub.cons.donateData);
 	})
 }
-getDonate();
+// getDonate();
 console.log("end")
