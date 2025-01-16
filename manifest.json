@@ -1,5 +1,5 @@
 {
-	"manifest_version": 2,
+	"manifest_version": 3,
 	"minimum_chrome_version": "22",
 	"name": "__MSG_ext_name__",
 	"short_name":"smartUp",
@@ -13,8 +13,7 @@
 		"128": "icon.png"
 	},
 	"background": {
-		"scripts": ["js/purify.js","js/gbk.js","js/background.js"],
-		"persistent": true
+		"service_worker": "js/background.js"
 	},
 	"content_scripts": [
 		{
@@ -25,22 +24,24 @@
 			"match_about_blank":true
 		}
 	],
-	"browser_action": {
+	"action": {
 		"default_icon": {
 			"19": "icon.png",
 			"38": "icon.png"
 		},
-		"default_title": "smartUp",
-		"default_popup": "html/popup.html"
+		"default_title": "smartUp"
 	},
 	"options_ui": {
 		"open_in_tab": true,
 		"page": "html/options.html"
 	},
 	"web_accessible_resources": [
-		"image/*",
-		"icon.png"
+		{
+			"resources": ["*.svg", "*.png"],
+			"matches": ["*://*/*"]
+		}
 	],
-	"permissions": ["tabs","<all_urls>","notifications","storage","contextMenus","unlimitedStorage","tts"],
-	"optional_permissions": ["downloads","downloads.shelf","clipboardRead","clipboardWrite","bookmarks","history","management","sessions","pageCapture","background","topSites"]
+	"permissions": ["tabs","notifications","storage","contextMenus","unlimitedStorage","tts","activeTab","scripting"],
+	"host_permissions": ["<all_urls>"],
+	"optional_permissions": ["downloads","downloads.shelf","clipboardRead","clipboardWrite","management","sessions","pageCapture","background","topSites"]
 }

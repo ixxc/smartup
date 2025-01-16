@@ -8,7 +8,6 @@ Array.prototype.contains=function (ele) {
 }
 var config,
 	defaultConf,
-	localConfig={},
 	browserType;
 
 //check browser
@@ -19,7 +18,6 @@ if(navigator.userAgent.toLowerCase().indexOf("firefox")!=-1){
 }else{
 	browserType="cr";
 }
-
 
 var suo={
 	CON:{
@@ -36,15 +34,11 @@ var suo={
 	boxShowFrom:null,
 	selects:["xx"],
 	begin:function(){
-		suo.initActionEle();//init engine/script list
-		suo.initNewAdded();
-
 		window.setTimeout(function(){
 			suo.init();
 			suo.initMenu();
 			suo.initI18n();
-			// var itemArray=["mges","tdrg","ldrg","idrg","txtengine","imgengine","script","tsdrg","lsdrg","isdrg","rges","wges","pop","icon","ctm","touch","dca","ksa"];
-			var itemArray=["txtengine","imgengine","script"];
+			var itemArray=["txtengine","imgengine"];
 
 			var arrayFn=Object.getOwnPropertyNames(config.general.fnswitch);
 			for(var i=0;i<arrayFn.length;i++){
@@ -55,10 +49,6 @@ var suo={
 					itemArray.push("tdrg");
 					itemArray.push("ldrg");
 					itemArray.push("idrg");
-				}else if(arrayFn[i].substr(2)=="sdrg"){
-					itemArray.push("tsdrg");
-					itemArray.push("lsdrg");
-					itemArray.push("isdrg");
 				}else{
 					itemArray.push(arrayFn[i].substr(2));
 				}
@@ -68,40 +58,11 @@ var suo={
 				suo.initListItem(itemArray[i]);
 			}
 
-			suo.initPer();
 			suo.initUI("mges");
 			suo.initUI("drg");
-			suo.initUI("touch");
 			suo.initValue();
-			suo.initExclusion();
 			suo.initEnd();
 		},100)
-		// suo.welcome();
-		// suo.adInline();
-	},
-	adInline:()=>{
-		const inlineAd = suo.cons.donateData?.ad[0]?.find(ad => ad.type === "ad-inline" && !ad.on);
-		inlineAd && document.querySelector("#ad-inline")?.remove();
-	},
-	welcome:()=>{
-		const oninstallAd = suo.cons.reason!="install" || suo.cons.donateData?.ad[0]?.find(ad => ad.type === "ad-oninstall_popin" && !ad.on);
-		if (oninstallAd) return;
-
-		const dom=(suo.initAPPbox([],[800,230],"SmartUp has been installed successfully, and the following is an advertisement provided by the sponsor.","bg","showlist"));
-		const domMain=dom.querySelector(".box_main");
-			domMain.innerText="";
-
-		const domAd=suo.domCreate2("iframe",{setName:["src","width","height","iframeborder"],setValue:["https://www.usechatgpt.ai",window.innerWidth*0.8,window.innerHeight*0.8,"none"]});
-		domMain.appendChild(domAd);
-		suo.initPos(dom)
-	},
-	initNewAdded:()=>{
-		console.log("initNewAdded")
-		console.log(!config.general.exclusion)
-		// exclusion - black/white list
-		if (!config.general.exclusion){
-			config.general.exclusion=defaultConf.general.exclusion;
-		}
 	},
 	init:function(){
 		console.log("begin");
@@ -133,13 +94,6 @@ var suo={
 		switch(e.type){
 			case"keydown":
 				console.log(e.target);
-				suo.itemEditDca(e);
-
-				//key edit ksa
-				console.log(e);
-				if(e.target.classList.contains("box_keyvalue")){
-					suo.keyEdit(e);
-				}
 				break;
 			case"mousedown":
 				if(e.button==0&&(e.target.classList.contains("box_head")||e.target.classList.contains("box_title"))){
@@ -153,37 +107,12 @@ var suo={
 			case"click":
 				var ele=e.target;
 				switch(ele.id){
-					case"dca_keycusreset":
-						document.querySelector("#dca_keycusbox").value="";
-						suo.saveConf();
-						break;
-					case"dca_keycusbox":
-						suo.dcaKeycus(e);
-						break;
-					case"donate_btn_close":
-					case"donate_btn_hide":
-						suo.donateBox.hideDonate(ele);
-						break;
-					case"donate_name":
-						suo.donateBox.showDonate();
-						break;
-					case"bgreset":
-						suo.bgReset(e);
-						break;
 					case"bgrepeat":
 						if(ele.checked){
 							document.body.style.cssText+="background-repeat:repeat !important;background-size: initial !important;"
 						}else{
 							document.body.style.cssText+="background-repeat:no-repeat !important;background-size: cover !important;"
 						}
-						// if(config.general.settings.repeat){
-						// 	document.body.style.cssText+="background-repeat:repeat !important;background-size: initial !important;"
-						// }else{
-						// 	document.body.style.cssText+="background-repeat:no-repeat !important;background-size: cover !important;"
-						// }
-						break;
-					case"setbg":
-						suo.setBg();
 						break;
 					case"nav_menu":
 						document.querySelector(".menupluscontent").style.display="block";
@@ -194,20 +123,10 @@ var suo={
 					case"menu_bg":
 						suo.menuBarRemove();
 						break;
-					case"su_login":
-						chrome.tabs.create({url:"chrome://chrome-signin/"});
-						break;
 					case"wel_button":
 						suo.domHide(document.querySelector("#welcomebox"));
 						break;
 					case"chk_general_settings_autosave":
-						if(e.target.checked){
-							document.querySelector("#menuplus_save").style.display="none";
-							document.querySelector(".nav_btn_save").style.display="none";
-						}else{
-							document.querySelector("#menuplus_save").style.display="block";
-							document.querySelector(".nav_btn_save").style.display="inline-block";
-						}
 						config.general.settings.autosave=e.target.checked;
 						suo.saveConf2();
 						break;
@@ -215,42 +134,7 @@ var suo={
 						suo.saveConf2();
 						break;
 					case"btn_add":
-						if(suo.getDataset(e,"confobj","value").split("|")[0]=="ksa"){
-							e.target.dataset.confid=config.ksa.actions.length;
-							suo.itemEditKsa(e,"new");
-							break;
-						}
 						suo.itemAddBefore(e);
-						break;
-					case"conf_import":
-						suo.confImport();
-						break;
-					case"conf_export":
-						suo.confExport();
-						break;
-					case"conf_reset":
-						var reset=prompt(suo.getI18n("msg_reset"));
-						if(reset=="ReSeT"){
-							config={};
-							config=defaultConf;
-							chrome.storage.local.clear();
-							suo.saveConf2();
-							window.setTimeout(function(){
-								window.location.reload();
-							},1000)
-						}else{
-							suo.showMsgBox(suo.getI18n("msg_reset2"),"warning")
-						}
-						break;
-					case"conf_reset_apps":
-						if(config.apps){delete config.apps;suo.saveConf2()}
-						break;
-					case"resetcurrent":
-					case"nav_reset":
-						console.log(suo.cons.currentOBJArray)
-						config[suo.cons.currentOBJArray[0]][suo.cons.currentOBJArray[1]]=defaultConf[suo.cons.currentOBJArray[0]][suo.cons.currentOBJArray[1]];
-						suo.saveConf2();
-						window.setTimeout(function(){window.location.reload()},500);
 						break;
 					case"btn_closead":
 						var domAd=e.target.parentNode.parentNode;
@@ -263,27 +147,9 @@ var suo={
 				if(ele.classList.contains("box_tabtitle")&&!ele.classList.contains("box_tabtitleactive")){
 					suo.tabSwitch(e);
 				}
-				if(ele.classList.contains("donate_cctext")){
-					ele.select();
-				}
-				if(ele.classList.contains("donate_listli")){
-					suo.donateBox.switch(ele);
-				}
-				if(ele.classList.contains("donate_ccli")){
-					suo.donateBox.switchCcli(ele);
-				}
-				if(ele.classList.contains("menuplus_save")){
-					suo.saveConf2();
-				}
 				if(ele.classList.contains("menu_hide")&&!ele.classList.contains("cancel_hide")){
 					document.querySelector(".menupluscontent").style.display="none";
 					//e.target.parentNode.style.cssText+="display:none;";
-				}
-				if(ele.classList.contains("menuplus_exit")){
-					window.close();
-				}
-				if(ele.classList.contains("menuplus_opennew")){
-					chrome.tabs.create({url:"../html/options.html"})
 				}
 				if(ele.classList.contains("nav_menu")){
 					document.querySelector(".menupluscontent").style.display="block";
@@ -318,9 +184,6 @@ var suo={
 				if(ele.classList.contains("rate")||(ele.tagName.toLowerCase()!="html"&&ele.parentNode.classList.contains("rate"))){
 					chrome.tabs.create({url:suo.cons.webstoreURL})
 				}
-				if(ele.classList.contains("donate")||(ele.tagName.toLowerCase()!="html"&&ele.parentNode.classList.contains("donate"))){
-					suo.donateBox.showDonate();
-				}
 				if(ele.className&&e.target.classList.contains("menuli")){
 					suo.clickMenuLI(e);
 					suo.cons.menuPin?null:suo.menuBarRemove();
@@ -329,12 +192,8 @@ var suo={
 					suo.clickMenuDiv(e);
 				}
 				if(ele.classList.contains("item_edit")){
-					console.log(e.target)
-					if(e.target.dataset.actiontype&&e.target.dataset.actiontype=="ksa"){
-						suo.itemEditKsa(e);
-					}else{
-						suo.itemEditBefor(e);
-					}
+					console.log(e.target);
+					suo.itemEditBefor(e);
 				}
 				if(ele.classList.contains("item_add")){
 					suo.itemAddBefore(e);
@@ -355,12 +214,6 @@ var suo={
 				}
 				if(ele.classList.contains("btn_list")){
 					suo.showList(e);
-				}
-				if(ele.classList.contains("exclusion_add")){
-					suo.exclusionAdd(e);
-				}
-				if(ele.classList.contains("exclusion_del")){
-					suo.exclusionDel(e);
 				}
 				break;
 			case"mouseup":
@@ -391,47 +244,6 @@ var suo={
 						e.target.parentNode.querySelector(".box_radiolist").style.cssText+="display:block;";
 					}
 				}
-				if(e.target.dataset.confele=="mouseup"&&e.target.checked){
-					suo.checkPermission(["browserSettings"],null,null,"");
-					break;
-				}
-				if(e.target.classList.contains("change-background")){
-					if(e.target.checked){
-						suo.checkPermission(["background"],null,null,"");
-					}else{
-						chrome.permissions.remove({permissions:["background"]},function(removed){
-							if (removed) {
-							  	suo.initPer();
-							  	chrome.runtime.sendMessage({type:"getpers"}, function(response) {});
-							  	suo.showMsgBox(suo.getI18n("msg_delpers"),"save",3);
-							}else{
-								suo.showMsgBox(suo.getI18n("msg_delpers_fail"),"warning",3);
-							}
-						});
-					}
-				}
-				//sync changed
-				if(e.target.dataset.confele=="autosync"){
-					console.log(e.target.checked);
-					config.general.sync.autosync=e.target.checked;
-					chrome.storage.local.get(function(items){
-						let _obj={};
-							_obj.localConfig=items.localConfig;
-						chrome.storage.local.clear(function(){
-							chrome.storage.local.set(_obj,function(){
-								if(chrome.storage.sync){
-									chrome.storage.sync.clear(function(){
-										suo.saveConf2();
-										window.setTimeout(function(){window.location.reload();},1000);
-									})
-								}else{
-									suo.saveConf2();
-									window.setTimeout(function(){window.location.reload();},1000);
-								}
-							})
-						})
-					})
-				}
 				if(e.target.classList.contains("box_select")&&e.target.name=="n_mail"){
 					var _dom=suo.getAPPboxEle(e);
 						_dom=_dom.querySelector(".confix");
@@ -455,62 +267,19 @@ var suo={
 						confOBJ=confOBJ[confArray[i]];
 					}
 					var confid=confOBJ.length;
-					suo.itemEdit(confobj,confid,"add",null,e.target.name.substr(2) /*(e.target.name.indexOf("engine")!=-1?"engine":"script")*/);
+					suo.itemEdit(confobj,confid,"add",null,e.target.name.substr(2));
 				}
 				if(e.target.id=="con-lang"){
 					config.general.settings.lang=e.target.value;
 					suo.saveConf2();
 					window.setTimeout(function(){location.reload();},500)
 				}
-				if(e.target.id=="bgchange"){
-					suo.bgChange(e);
-				}
 				if(e.target.classList.contains("change-checkbox")){
-					switch(e.target.dataset.confele){
-						case"fnctm"://when set disable contextmenu, remove all.
-							if(!e.target.checked&&chrome.contextMenus){
-								chrome.contextMenus.removeAll();
-							}
-							break;
-					}					
-					//fnswitch drg/sdrg
-					if(e.target.dataset.confele=="fndrg"){
-						var doms=document.querySelector("input[data-confele=fnsdrg]");
-						var dom=document.querySelector("input[data-confele=fndrg]");
-						if(dom.checked){doms.checked=false;suo.changeFnswitch(doms);suo.changeCheckbox(doms)}
-					}
-					if(e.target.dataset.confele=="fnsdrg"){
-						var doms=document.querySelector("input[data-confele=fnsdrg]");
-						var dom=document.querySelector("input[data-confele=fndrg]");
-						if(doms.checked){dom.checked=false;suo.changeFnswitch(dom);suo.changeCheckbox(dom)}
-					}
-					//fnswitch popup/icon
-					if(e.target.dataset.confele=="fnpop"){
-						var doms=document.querySelector("input[data-confele=fnicon]");
-						var dom=document.querySelector("input[data-confele=fnpop]");
-						if(dom.checked){doms.checked=false;suo.changeFnswitch(doms);suo.changeCheckbox(doms)}
-						suo.initPop();
-					}
-					if(e.target.dataset.confele=="fnicon"){
-						var doms=document.querySelector("input[data-confele=fnicon]");
-						var dom=document.querySelector("input[data-confele=fnpop]");
-						if(doms.checked){dom.checked=false;suo.changeFnswitch(dom);suo.changeCheckbox(dom)}
-						suo.initPop();
-					}
-
-					if(e.target.dataset.confele=="autosave"){
-						var doms=document.querySelectorAll("[data-confele=autosave]");
-						for(var i=0;i<doms.length;i++){
-							doms[i].checked=e.target.checked;
-						}
-						e.target.checked?document.querySelector("#menuplus_save").style.display="none":document.querySelector("#menuplus_save").style.display="block";
-					}
-
 					var confArray=suo.getConfArray(e.target);
 					var arraydrg=["chk_"+confArray[0]+"_settings_txt","chk_"+confArray[0]+"_settings_lnk","chk_"+confArray[0]+"_settings_img"];
 					for(var i=0;i<arraydrg.length;i++){
 						if(arraydrg[i]==e.target.id){
-							var menuDom=document.querySelector("[data-id0=\'"+(confArray[0]=="sdrg"?"3":"4")+"\'][data-id1=\'"+(confArray[0]=="sdrg"?i+1:i+2)+"\']");
+							var menuDom=document.querySelector("[data-id0=\'4\'][data-id1=\'i+2\']");
 							if(e.target.checked){
 								menuDom.style.display="block";
 								menuDom.parentNode.style.height=Math.abs(menuDom.parentNode.style.height.substr(0,menuDom.parentNode.style.height.length-2))+30+"px";
@@ -579,9 +348,6 @@ var suo={
 						dom.style.display="none";
 					}
 				}
-				if(e.target.name&&e.target.name=="exclusiontype"){
-					suo.initExclusion();
-				}
 				break;
 			case"mouseover":
 				if(e.target.classList.contains("menuplusimg")){
@@ -624,54 +390,6 @@ var suo={
 				break;
 		}
 	},
-	initExclusion:()=>{
-		var _doms=document.querySelectorAll(".set>.setcontent>ul.exclusionwrap");
-		for(var i=0;i<_doms.length;i++){
-			_doms[i].innerText="";
-			var _conf=config.general.exclusion[_doms[i].dataset.confele];
-			for(var ii=0;ii<_conf.length;ii++){
-				var _li=suo.domCreate2("li",{setName:["className"],setValue:["exclusion_list"]},null,null,{setName:["id"],setValue:[ii]},_conf[ii]);
-				var _btn=suo.domCreate2("span",{setName:["className"],setValue:["exclusion_del"]},null,null,null,"x");
-				_li.appendChild(_btn);
-				_doms[i].appendChild(_li);
-			}
-		}
-		if(config.general.exclusion.exclusiontype=="black"){
-			document.querySelector("#exclusion_black").style.cssText+="display:block;";
-			document.querySelector("#exclusion_white").style.cssText+="display:none;";
-		}else{
-			document.querySelector("#exclusion_white").style.cssText+="display:block;";
-			document.querySelector("#exclusion_black").style.cssText+="display:none;";
-		}
-	},
-	exclusionDel:e=>{
-		var _dom=e.target.parentNode;
-		var _id=_dom.dataset.id;
-		var _conf=config.general.exclusion[_dom.parentNode.dataset.confele];
-		_conf.splice(_id,1);
-		suo.saveConf();
-		suo.initExclusion();
-	},
-	exclusionAdd:e=>{
-		var _conf=config.general.exclusion[e.target.dataset.confele];
-		var _dom=e.target.parentNode.querySelector("input[type=text]");
-		if(_dom.value){
-			if(_conf.contains(_dom.value)){
-				suo.showMsgBox(suo.getI18n("tip_exclusion_repeat"),"error",5)
-			}else{
-				_conf.push(_dom.value);
-				_dom.value="";
-				suo.saveConf();
-				suo.initExclusion();
-			}
-		}
-	},
-	keyEdit:function(e){
-		console.log(e);
-		editMode=true;
-		var dom=e.target;
-		dom.value+=(dom.value==""?"":" ")+suo.ksa.keyGet(e.keyCode);
-	},
 	showList:function(e){
 		var btnArray=[];
 		var _dom=suo.initAPPbox(btnArray,[400,230],suo.getI18n("tip_showlist"),"bg","showlist");
@@ -690,7 +408,7 @@ var suo={
 			_li.appendChild(_title);
 			var _direct=suo.domCreate2("span",null,null,"background-color:#d0d9ff; display:inline-block; border-radius:20px;padding:4px 8px 2px 8px;");
 			for(var j=0;j<confOBJ[i].direct.length;j++){
-				var _img=suo.domCreate2("img",{setName:["className","src"],setValue:["item_edit",chrome.extension.getURL("")+"image/"+"direct.png"]},null,"height:24px;"+suo.directimg(confOBJ[i].direct[j]));
+				var _img=suo.domCreate2("img",{setName:["className","src"],setValue:["item_edit",chrome.runtime.getURL("")+"image/"+"direct.png"]},null,"height:24px;"+suo.directimg(confOBJ[i].direct[j]));
 				_direct.appendChild(_img);
 			}
 			_li.appendChild(_direct);
@@ -699,13 +417,6 @@ var suo={
 		_dom.querySelector(".box_content").style.cssText+="overflow:auto;margin-bottom:8px;";
 		_dom.querySelector(".box_content").appendChild(_ul);
 		suo.initPos(_dom);
-	},
-	initPop:function(){
-		if(config.general.fnswitch.fnicon){
-			chrome.browserAction.setPopup({popup:""});
-		}else{
-			chrome.browserAction.setPopup({popup:"../html/popup.html"});
-		}
 	},
 	initI18n:function(){
 		var i18nOBJ=document.querySelectorAll("[data-i18n]");
@@ -735,13 +446,10 @@ var suo={
 	},
 	getI18n:function(str){
 		// console.log(str)
-		if(["n_mute","n_stop","n_reload","n_move","n_detach","n_switchtab","n_copytab","n_copytabele_target","n_bookmark","n_savepage","n_mail_target"].contains(str)){
+		if(["n_stop","n_reload","n_move","n_detach","n_switchtab","n_copytab","n_copytabele_target","n_savepage","n_mail_target"].contains(str)){
 			str="n_tab";
 		}
 		return chrome.i18n.getMessage(str)||str;
-	},
-	MSG:function(message){
-		chrome.runtime.sendMessage(message,function(response){})
 	},
 	saveConf:function(str,type,mytime){
 		config.general.settings.autosave?suo.saveConf2(str,type,mytime):null;
@@ -782,29 +490,6 @@ var suo={
 	itemDel:function(e){
 		var ele=e.target;
 		var confArray=suo.getDataset(ele,"confobj","value").split("|");
-		// del permissions 
-		var removePer=function(removed){
-			if (removed) {
-			  	suo.initPer();
-			  	chrome.runtime.sendMessage({type:"getpers"}, function(response) {});
-			  	suo.showMsgBox(suo.getI18n("msg_delpers"),"save",3);
-				return;
-			}else{
-				suo.showMsgBox(suo.getI18n("msg_delpers_fail"),"warning",3);
-				return;
-			}
-		}
-		if(confArray[0]=="per_pers"){
-			var thepers=e.target.parentNode.querySelector(".item_name").innerText;
-			chrome.permissions.remove({permissions:[thepers]},function(removed){removePer(removed)});
-			return;
-		}
-		if(confArray[0]=="per_orgs"){
-			var theorgs=e.target.parentNode.querySelector(".item_name").innerText;
-			chrome.permissions.remove({origins:[theorgs]},function(removed){removePer(removed)});
-			return;
-		}
-
 
 		var confOBJ=config,
 			actionType=suo.getDataset(ele,"actiontype","value");
@@ -814,11 +499,11 @@ var suo={
 		if(confOBJ.length<=1){suo.showMsgBox(suo.getI18n("msg_dellast"),"warning");return;}
 
 		var delId=suo.getDataset(ele,"confid","value");
-		//check if the engine/script in use
-		if(confArray[1]=="engine"||confArray[1]=="script"){//check in use
+		//check if the engine in use
+		if(confArray[1]=="engine"){//check in use
 			//console.log("delengine")
 			var theType=confArray[2];
-			var OBJArray=[config.mges.actions,config.drg.tdrg,config.drg.idrg,config.wges.actions,config.rges.actions,config.pop.actions];
+			var OBJArray=[config.mges.actions,config.drg.tdrg,config.drg.idrg];
 			for(j=0;j<OBJArray.length;j++){
 				for(var i=0;i<OBJArray[j].length;i++){
 					for(var ii=0;OBJArray[j][i].selects&&ii<OBJArray[j][i].selects.length;ii++){
@@ -833,11 +518,11 @@ var suo={
 		}	
 
 		confOBJ.splice(delId,1);
-		//reset engine/script id for action
-		if(confArray[1]=="engine"||confArray[1]=="script"){//new 
+		//reset engine id for action
+		if(confArray[1]=="engine"){//new
 			//console.log("delengine")
 			var theType=confArray[2];
-			var OBJArray=[config.mges.actions,config.drg.tdrg,config.drg.idrg,config.wges.actions,config.rges.actions,config.pop.actions];
+			var OBJArray=[config.mges.actions,config.drg.tdrg,config.drg.idrg];
 			for(j=0;j<OBJArray.length;j++){
 				for(var i=0;i<OBJArray[j].length;i++){
 					for(var ii=0;OBJArray[j][i].selects&&ii<OBJArray[j][i].selects.length;ii++){
@@ -851,10 +536,6 @@ var suo={
 					}
 				}
 			}
-		}
-		//reset jslist's enabled array.
-		if(confArray[1]=="script"){
-			delete config.apps.jslist.enabled;
 		}
 		suo.saveConf();
 		suo.initListItem(actionType);
@@ -879,7 +560,6 @@ var suo={
 				break;
 		}
 		//OBJ.innerText=str;
-		//
 		OBJ.textContent="";
 		if(typeof str=="string"){
 			OBJ.innerText=str;
@@ -1005,7 +685,7 @@ var suo={
 			menuDom.appendChild(menuP);
 			menuDom.appendChild(menuUL);
 			//init fnswitch menu
-			if(i>1&&i<menuModel.main.length-1/*&&config.general.fnswitch[menuModel.main[i]]*/){
+			if(i>1&&i<menuModel.main.length/*&&config.general.fnswitch[menuModel.main[i]]*/){
 				var domOBJ=document.querySelector("#m-"+menuModel.main[i]);
 				if(config.general.fnswitch["fn"+menuModel.main[i]]){
 					domOBJ.style.display="block";
@@ -1039,17 +719,8 @@ var suo={
 			suo.initValue(setDom,true)
 		}
 		//document.querySelector("#nav_txt").innerText=ele.parentNode.previousSibling.innerText+" · "+ele.innerText;
-		console.log(setDom)
+		console.log(setDom);if(!setDom)return;
 		suo.cons.currentOBJArray=setDom.dataset.confobj.split("|");
-		if(suo.cons.currentOBJArray[0]){
-			document.querySelector("#nav_reset").style.display="inline-block";
-			config.general.autosave?document.querySelector(".nav_btn_save").style.display="inline-block":null;
-			document.querySelector("#resetcurrent").style.display="block";
-		}else{
-			document.querySelector("#nav_reset").style.display="none";
-			document.querySelector(".nav_btn_save").style.display="none";
-			document.querySelector("#resetcurrent").style.display="none";
-		}
 		if((ele.dataset.id0=="1"&&ele.dataset.id1=="2")
 			||(ele.dataset.id0=="2"&&ele.dataset.id1=="2")
 			||(ele.dataset.id0=="4"&&ele.dataset.id1=="2")
@@ -1059,44 +730,11 @@ var suo={
 			||(ele.dataset.id0=="9"&&ele.dataset.id1=="1")
 			||(ele.dataset.id0=="10"&&ele.dataset.id1=="2")
 			||(ele.dataset.id0=="12"&&ele.dataset.id1=="1")){
-				if(ele.dataset.id0=="1"&&ele.dataset.id1=="2"){
-					suo.showBtnAdd(true,setDom.dataset.confobj+"|script",setDom);
-					return;
-				}
 				suo.showBtnAdd(true,setDom.dataset.confobj,setDom);
 				//document.querySelector("#btn_add").style.cssText+="display:block;"
 		}else{
 			suo.showBtnAdd(false);
 			//document.querySelector("#btn_add").style.cssText+="display:none;"
-		}
-		if((ele.dataset.id0=="1"&&ele.dataset.id1=="6")){
-			suo.confExport();
-		}
-		//set sort
-		let id0=ele.dataset.id0,
-			id1=ele.dataset.id1;
-		for(var i=0;i<suo.cons.sort.length;i++){
-			if(suo.cons.sort[i][0]==id0&&suo.cons.sort[i][1]==id1){
-				suo.cons.sortDom=Sortable.create(document.querySelector(".set-"+id0+id1+" ul.con-item"),{
-					animation:200,
-					easing:"ease-in-out",
-					ghostClass:"su_sortable_ghost",
-					chosenClass:"su_sortable_chosen",
-					onEnd:function(e){
-						let arr=suo.getConfOBJ(e);
-						for(var ii in arr){
-							if(ii==e.oldIndex){
-								arr.splice(e.newIndex,0,arr.splice(e.oldIndex,1)[0]);
-								break;
-							}
-						}
-						console.log(arr);
-						suo.initListItem(e.item.dataset.actiontype);
-						suo.saveConf();
-					}
-				});
-				break;
-			}
 		}
 	},
 	clickMenuDiv:function(e){
@@ -1125,7 +763,7 @@ var suo={
 			window.setTimeout(function(){
 				var t=0;
 				var confArray=suo.getConfArray(ele);
-				if(confArray[0]=="sdrg"||confArray[0]=="drg"){//check menuli height
+				if(confArray[0]=="drg"){//check menuli height
 					if(!config[confArray[0]].settings.txt){t++}
 					if(!config[confArray[0]].settings.lnk){t++}
 					if(!config[confArray[0]].settings.img){t++}
@@ -1141,10 +779,10 @@ var suo={
 		var valueOBJ={setName:["name","className"],setValue:[type,"box_select"]};
 		var domSelect=suo.domCreate2("select",valueOBJ);
 		var index=0;
-		if(["n_txtengine","n_imgengine","n_script"].contains(type)){
+		if(["n_txtengine","n_imgengine"].contains(type)){
 			var type=type.substr(2);
-			for(i=0;i<(type=="script"?config.general.script[type].length:config.general.engine[type].length);i++){
-				domSelect.appendChild(suo.domCreate2("option",{setName:["value"],setValue:[""+i]},null,null,null,type=="script"?config.general.script[type][i]["name"]:config.general.engine[type][i]["name"]));
+			for(i=0;i<(config.general.engine[type].length);i++){
+				domSelect.appendChild(suo.domCreate2("option",{setName:["value"],setValue:[""+i]},null,null,null,config.general.engine[type][i]["name"]));
 				if(i==value){index=i;}
 			}
 			domSelect.appendChild(suo.domCreate2("option",{setName:["value"],setValue:["add_from_select"]},null,null,null,"Add new ..."));
@@ -1153,12 +791,8 @@ var suo={
 			_obj=(actionOptions.special[confOBJ.name]&&actionOptions.special[confOBJ.name][type])?actionOptions.special[confOBJ.name][type]:actionOptions.selects[type];
 			console.log(_obj)
 			for(i=0;i<_obj.length;i++){
-				domSelect.appendChild(suo.domCreate2("option",{setName:["value"],setValue:[_obj[i]]},null,null,null,type=="n_voicename"?_obj[i]:suo.getI18n(_obj[i])));
-				if(type=="script"){
-					if(i==value){index=i}
-				}else{
+				domSelect.appendChild(suo.domCreate2("option",{setName:["value"],setValue:[_obj[i]]},null,null,null,suo.getI18n(_obj[i])));
 					if(value==_obj[i]){index=i;}
-				}
 			}
 		}
 		domSelect.selectedIndex=index;
@@ -1413,11 +1047,6 @@ var suo={
 				domOBJ.appendChild(br);
 			}
 			domOBJ.appendChild(suo.domCreate2("div",{setName:["className"],setValue:["setdes"]},null,null,null,suo.getI18n("des_fnswitch")));
-		},
-		set_10:function(){
-			var domSet=suo.domCreate2("div",{setName:["className"],setValue:["set set-10"]},"","",{setName:["conf0","conf1"],setValue:["general","settings"]});
-			var setname=suo.domCreate2("div",{setName:["className"],setValue:["setname"]},null,null,null,suo.getI18n("settings"));
-			var setcontent=suo.domCreate2("div");
 		}
 	},
 	initValue:function(delayDom,delay){
@@ -1445,13 +1074,13 @@ var suo={
 				var confArray=suo.getConfArray(doms[i]);
 				doms[i].id="chk_"+confArray[0]+"_"+confArray[1]+"_"+doms[i].dataset.confele.replace("|", "_");
 				doms[i].nextSibling.setAttribute("for",doms[i].id);
-				//drg/sdrg|settings
+				//drg|settings
 				if(["txt","lnk","img"].contains(doms[i].dataset.confele)){
 					//console.log(confArray)
 					for(var ii=0;ii<3;ii++){
 						//break
 						if(doms[i].dataset.confele==["txt","lnk","img"][ii]){
-							var theDom=document.querySelector("[data-id0=\'"+(confArray[0]=="sdrg"?"3":"4")+"\'][data-id1=\'"+(confArray[0]=="sdrg"?ii+1:ii+2)+"\']");
+							var theDom=document.querySelector("[data-id0=\'4\'][data-id1=\'"+(ii+2)+"\']");
 							//console.log(theDom)
 							confOBJ[doms[i].dataset.confele]?theDom.style.display="block":theDom.style.display="none";
 							theDom.parentNode.style.height="auto";
@@ -1519,20 +1148,6 @@ var suo={
 		}
 		var confArray=getdata(ele).split("|");
 		var confOBJ=config;
-		//console.log(confArray);
-		//console.log(confOBJ);
-		//add ad support, config.about null
-		if(confArray[0]&&confArray[0]=="about"&&confArray[1]&&confArray[1]=="donatedev"){
-			if(!config.about){
-				config.about={};
-				config.about.donatedev={};
-				config.about.donatedev.ad=true;
-			}
-			if(!config.about.donatedev){
-				config.about.donatedev={};
-				config.about.donatedev.ad=true;
-			}
-		}
 		for(var i=0;i<confArray.length;i++){
 			confOBJ=confOBJ[confArray[i]];
 		}
@@ -1637,7 +1252,7 @@ var suo={
 				config[ele.dataset.confele.substr(2)]=defaultConf[ele.dataset.confele.substr(2)];
 				suo.saveConf();
 			}
-			if(ele.dataset.confele.substr(2)=="drg"||ele.dataset.confele.substr(2)=="sdrg"){
+			if(ele.dataset.confele.substr(2)=="drg"){
 				suo.initListItem("t"+ele.dataset.confele.substr(2));
 				suo.initListItem("l"+ele.dataset.confele.substr(2));
 				suo.initListItem("i"+ele.dataset.confele.substr(2));
@@ -1648,42 +1263,6 @@ var suo={
 			suo.domHide(domOBJ);
 		}
 	},
-	initPer:function(){
-		if(!chrome.permissions){return;}
-		chrome.permissions.getAll(function(pers){
-			theFunction(pers);
-		});
-		var theFunction=function(pers){
-			var thepers=pers.permissions;
-			var theorgs=pers.origins;
-			var eleOBJ={setName:["className"],setValue:["item item_per item-del"]};
-			var domOBJ_pers=document.querySelector(".ul_pers");
-				domOBJ_pers.textContent="";
-			// var domOBJ_orgs=document.querySelector(".ul_orgs");
-			for(var i=thepers.length-1;i>-1;i--){
-				var liOBJ=suo.domCreate2("li",eleOBJ,"","width:200px;",{setName:["confid"],setValue:[i]});
-				var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name"]},"","","",thepers[i]);
-				var liDel=suo.domCreate2("span",{setName:["className"],setValue:["item_del"]},null,null,null,"x");
-				liOBJ.appendChild(liName);
-				liOBJ.appendChild(liDel);
-				domOBJ_pers.appendChild(liOBJ);
-			}
-			for(var i=0;i<theorgs.length;i++){
-				var liOBJ=suo.domCreate2("li",eleOBJ,"","width:200px;",{setName:["confid"],setValue:[i]});
-				var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name"]},"","","",theorgs[i]);
-				var liDel=suo.domCreate2("span",{setName:["className"],setValue:["item_del"]},null,null,null,"x");
-				liOBJ.appendChild(liName);
-				liOBJ.appendChild(liDel);
-				//domOBJ_orgs.appendChild(liOBJ);
-				domOBJ_pers.appendChild(liOBJ);
-			}
-			//init change-background
-			document.querySelector("#change-background").checked=pers.permissions.contains("background");
-			if(pers.permissions.contains("browserSettings")){
-				document.querySelector("[data-confele=mouseup]").checked=pers.permissions.contains("browserSettings"); 
-			}
-		}
-	},
 	initListItem:function(type){
 		console.log(type)
 		domOBJ=document.querySelector(".ul_"+type);
@@ -1691,8 +1270,6 @@ var suo={
 		var confOBJ,eleOBJ,actionType;
 		switch(type){
 			case"mges":
-			case"touch":
-			case"ksa":
 				confOBJ=config[type].actions;
 				eleOBJ={setName:["className","title"],setValue:["item item_edit item_more item_"+type,suo.getI18n("tip_item")]};
 				actionType=type//+"actions";
@@ -1710,103 +1287,15 @@ var suo={
 				eleOBJ={setName:["className"],setValue:["item item_edit item_engine item-"+type]};
 				actionType=type;
 				break;
-			case"script":
-				confOBJ=config["general"]["script"][type];
-				eleOBJ={setName:["className"],setValue:["item item_edit item_script item-"+type]};
-				actionType=type;
-				break;
-			case"tsdrg":
-			case"lsdrg":
-			case"isdrg":
-				confOBJ=config["sdrg"][type];
-				eleOBJ={setName:["className"],setValue:["item item_edit item-"+type]};
-				actionType=type;
-				break;
-			case"rges":
-			case"wges":
-			case"pop":
-			case"icon":
-			case"ctm":
-			case"dca":
-				confOBJ=config[type].actions;
-				eleOBJ={setName:["className"],setValue:["item item_edit item-"+type+" edit_"+type]};
-				actionType=type;
-				break;
 		}
-		//if("tsdrg lsdrg isdrg".indexOf(type)!=-1){
-		if(["tsdrg","lsdrg","isdrg"].contains(type)){
-			for(var i=0;i<confOBJ.length;i++){
-				var liOBJ=suo.domCreate2("li",eleOBJ,"","padding-right:0;",{setName:["confid","actiontype"],setValue:[i,actionType]});
-				var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit"]},null,"width:160px;",{setName:["confid","actiontype"],setValue:[i,actionType]},(confOBJ[i].mydes&&confOBJ[i].mydes.type&&confOBJ[i].mydes.value)?confOBJ[i].mydes.value:suo.getI18n(confOBJ[i].name));
-				var liDirbox=suo.domCreate2("span",{setName:["className"],setValue:["item_sdrgdir item_edit"]}); 
-				var liimg=suo.domCreate2("span",{setName:["className"],setValue:["item_edit"]});
-					liimg.style.cssText+="background:url("+chrome.extension.getURL("")+"image/"+"direct.png"+") #d0d9ff center no-repeat;color:#d0d9ff;display:inline-block;width:40px;height:40px;"+suo.directimg(confOBJ[i].direct);
-					liDirbox.appendChild(liimg);
-				liOBJ.appendChild(liName);
-				liOBJ.appendChild(liDirbox);
-				domOBJ.appendChild(liOBJ);
-			}
-			return;
-		}
-		if(type=="rges"){
-			var _doms=document.querySelectorAll(".ul_rges");
-			var liOBJ=suo.domCreate2("li",eleOBJ,"","padding-right:0;",{setName:["confid","actiontype"],setValue:[0,"rges"]});
-			var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit edit_rges"]},null,"width:160px;",{setName:["confid","actiontype"],setValue:[0,"rges"]},(confOBJ[0].mydes&&confOBJ[0].mydes.type&&confOBJ[0].mydes.value)?confOBJ[0].mydes.value:suo.getI18n(confOBJ[0].name));
-			liOBJ.appendChild(liName);
-			_doms[0].textContent="";
-			_doms[0].appendChild(liOBJ);
-
-			var liOBJ=suo.domCreate2("li",eleOBJ,"","padding-right:0;",{setName:["confid"],setValue:[1]});
-			var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit edit_rges"]},null,"width:160px;",{setName:["confid","actiontype"],setValue:[1,"rges"]},(confOBJ[1].mydes&&confOBJ[1].mydes.type&&confOBJ[1].mydes.value)?confOBJ[1].mydes.value:suo.getI18n(confOBJ[1].name));
-			liOBJ.appendChild(liName);
-			_doms[1].textContent="";
-			_doms[1].appendChild(liOBJ);
-			return;
-		}
-		if(type=="wges"){
-			var _doms=document.querySelectorAll(".ul_wges");
-			for(var i=0;i<_doms.length;i++){
-				var _liOBJ=suo.domCreate2("li",eleOBJ,"","padding-right:0;",{setName:["confid","actiontype"],setValue:[i,"wges"]});
-				var _liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit edit_wges"]},null,"width:160px;",{setName:["confid","actiontype"],setValue:[i,"wges"]},(confOBJ[i].mydes&&confOBJ[i].mydes.type&&confOBJ[i].mydes.value)?confOBJ[i].mydes.value:suo.getI18n(confOBJ[i].name));
-				_liOBJ.appendChild(_liName);
-				_doms[i].textContent="";
-				_doms[i].appendChild(_liOBJ);
-			}
-			return;
-		}
-		if(type=="icon"||type=="dca"){
-			for(var i=0;i<confOBJ.length;i++){
-				var liOBJ=suo.domCreate2("li",eleOBJ,"","padding-right:0;",{setName:["confid","actiontype"],setValue:[i,actionType]});
-				var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit"]},null,"width:160px;",{setName:["confid","actiontype"],setValue:[i,actionType]},(confOBJ[i].mydes&&confOBJ[i].mydes.type&&confOBJ[i].mydes.value)?confOBJ[i].mydes.value:suo.getI18n(confOBJ[i].name));
-				liOBJ.appendChild(liName);
-				domOBJ.appendChild(liOBJ);
-			}
-			return;
-		}
-		if(type=="ksa"){
-			for(var i=0;i<confOBJ.length;i++){
-				var liOBJ=suo.domCreate2("li",eleOBJ,"","padding-right:0;",{setName:["confid","actiontype"],setValue:[i,actionType]});
-				var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit"]},null,"width:160px;",{setName:["confid","actiontype"],setValue:[i,actionType]},(confOBJ[i].mydes&&confOBJ[i].mydes.type&&confOBJ[i].mydes.value)?confOBJ[i].mydes.value:suo.getI18n(confOBJ[i].name));
-				var liDel=suo.domCreate2("span",{setName:["className","title"],setValue:["item_del",suo.getI18n("tip_del")]},null,null,null,"x");
-				liOBJ.appendChild(liName);
-				liOBJ.appendChild(liDel);
-
-				var _domCode=suo.domCreate2("span",{setName:["className"],setValue:["item_dir item_edit"]},null,(confOBJ[i].note&&confOBJ[i].note.value?"height:18px;line-height:18px;":null),{setName:["confid","actiontype"],setValue:[i,actionType]},suo.ksa.keyFormat(suo.ksa.keyGet(confOBJ[i].codes)));
-				liOBJ.appendChild(_domCode);
-
-				domOBJ.appendChild(liOBJ);
-			}
-			return;
-		}
-		//console.log(confOBJ)
 		for(var i=0;i<confOBJ.length;i++){
 			var liOBJ=suo.domCreate2("li",eleOBJ,"","",{setName:["confid","actiontype",],setValue:[i,actionType?actionType:type]});
 				// liOBJ.draggable=true;
-			var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit"]},null,"",{setName:["confid","actiontype"],setValue:[i,actionType?actionType:type]},("txtengine imgengine script".indexOf(type)!=-1)?confOBJ[i].name:((confOBJ[i].mydes&&confOBJ[i].mydes.type&&confOBJ[i].mydes.value)?confOBJ[i].mydes.value:suo.getI18n(confOBJ[i].name)));
+			var liName=suo.domCreate2("span",{setName:["className"],setValue:["item_name item_edit"]},null,"",{setName:["confid","actiontype"],setValue:[i,actionType?actionType:type]},("txtengine imgengine".indexOf(type)!=-1)?confOBJ[i].name:((confOBJ[i].mydes&&confOBJ[i].mydes.type&&confOBJ[i].mydes.value)?confOBJ[i].mydes.value:suo.getI18n(confOBJ[i].name)));
 			var liDel=suo.domCreate2("span",{setName:["className","title"],setValue:["item_del",suo.getI18n("tip_del")]},null,null,null,"x");
 			liOBJ.appendChild(liName);
 			liOBJ.appendChild(liDel);
-			if("txtengine imgengine script pop ctm".indexOf(type)!=-1){
+			if("txtengine imgengine".indexOf(type)!=-1){
 				//console.log(confOBJ[i])
 			}else{
 				var dirOBJ="";
@@ -1830,264 +1319,6 @@ var suo={
 			domOBJ.appendChild(liOBJ);
 		}
 	},
-	ksa:{
-		keyMap:[
-			{key:"Esc",code:27},
-			{key:"F1",code:112},
-			{key:"F2",code:113},
-			{key:"F3",code:114},
-			{key:"F4",code:115},
-			{key:"F5",code:116},
-			{key:"F6",code:117},
-			{key:"F7",code:118},
-			{key:"F8",code:119},
-			{key:"F9",code:120},
-			{key:"F10",code:121},
-			{key:"F11",code:122},
-			{key:"F12",code:123},
-			{key:"Insert",code:45},
-			{key:"Delete",code:46},
-			{key:"Home",code:36},
-			{key:"End",code:35},
-			{key:"`",code:192},
-			{key:"1",code:49},
-			{key:"2",code:50},
-			{key:"3",code:51},
-			{key:"4",code:52},
-			{key:"5",code:53},
-			{key:"6",code:54},
-			{key:"7",code:55},
-			{key:"8",code:56},
-			{key:"9",code:57},
-			{key:"0",code:48},
-			{key:"-",code:189},
-			{key:"=",code:187},
-			{key:"Backspace",code:8},
-			{key:"Tab",code:9},
-			{key:"Q",code:81},
-			{key:"W",code:87},
-			{key:"E",code:69},
-			{key:"R",code:82},
-			{key:"T",code:84},
-			{key:"Y",code:89},
-			{key:"U",code:85},
-			{key:"I",code:73},
-			{key:"O",code:79},
-			{key:"P",code:80},
-			{key:"[",code:219},
-			{key:"]",code:221},
-			//{key:"\\",code:220},
-			{key:"CapsLock",code:20},
-			{key:"A",code:65},
-			{key:"S",code:83},
-			{key:"D",code:68},
-			{key:"F",code:70},
-			{key:"G",code:71},
-			{key:"H",code:72},
-			{key:"J",code:74},
-			{key:"K",code:75},
-			{key:"L",code:76},
-			{key:";",code:186},
-			//{key:"'",code:222},
-			{key:"Enter",code:13},
-
-			{key:"Z",code:90},
-			{key:"X",code:88},
-			{key:"C",code:67},
-			{key:"V",code:86},
-			{key:"B",code:66},
-			{key:"N",code:78},
-			{key:"M",code:77},
-			{key:",",code:188},
-			{key:".",code:190},
-			{key:"/",code:191},
-			{key:"Space",code:32},
-			{key:"PageUp",code:33},
-			{key:"PageDown",code:34}
-		],
-		keyFormat:function(key){
-			var _str="";
-			for(var i=0;i<key.length;i++){
-				_str=(_str?_str+" ":"")+key[i].toString();
-			}
-			return _str;
-		},
-		keyGet:function(code){
-			if(!code){return ""}
-			code=code.toString();
-			var codes=code.split(",");
-			var keys=[];
-			for(var i=0;i<codes.length;i++){
-				for(var ii=0;ii<this.keyMap.length;ii++){
-					if(this.keyMap[ii].code==codes[i]){
-						keys.push(this.keyMap[ii].key);
-						break;
-					}
-				}			
-			}
-			return keys;
-		},
-		keyToCode:function(key){
-			if(!key){return "";}
-			var keys=key.split(" "),
-				codes=[];
-			for(var i=0;i<keys.length;i++){
-				for(var ii=0;ii<this.keyMap.length;ii++){
-					if(this.keyMap[ii].key==keys[i]){
-						codes.push(this.keyMap[ii].code);
-						break;
-					}
-				}
-			}
-			return codes;
-		}
-	},
-	dcaKeycus:function(e){
-		
-	},
-	getDataset2:function(e,type){
-		var ele=e.target||e;
-		var getdata=function(ele){
-			if(ele.dataset[type]==""||ele.dataset[type]){
-				return ele;
-			}else{
-				return arguments.callee(ele.parentNode);
-			}
-		}
-		return getdata(ele).dataset[type];
-	},
-	itemEditDca:function(e){
-		return;
-		if(!editMode||e.target.classList.contains("box_text")||e.target.classList.contains("box_note")||e.target.classList.contains("box_destext")){return;}
-		e.preventDefault();
-		var dombox=document.querySelector("smartkey.sk_apps_edit"),
-			domkeybox=dombox.querySelector(".box_keyvalue");
-		if(!sdo.cons.editedConf.conf.code){sdo.cons.editedConf.conf.code=[]}
-		var _keyarray=["ctrl","alt","shift"];
-		for(var i=0;i<_keyarray.length;i++){
-			var _dom=dombox.querySelector("#box_"+_keyarray[i]);
-			if(e[_keyarray[i]+"Key"]){
-				_dom.checked=true;
-			}else{
-				_dom.checked=false;
-			}
-		}
-		var _key=sdo.codeToKey(e.keyCode);
-		domkeybox.value+=_key?(" "+_key):"";
-		if(_key){
-			sdo.cons.editedConf.conf.code.push(e.keyCode);
-		}
-	},
-	itemEditKsa:function(e,editType){
-		let type=editType||"edit";
-		if(type=="new"){
-
-		}
-		function getDom(ele){
-			ele=ele.target||ele;
-			console.log(ele)
-			if(!ele.dataset.actiontype){
-				return arguments.callee(ele.parentNode);
-			}else{
-				return ele;
-			}
-		}
-		let dom=getDom(e);
-		let confId=suo.getDataset2(e,"confid"),
-			confArray=suo.getDataset2(e,"confobj").split("|"),
-			actionType=suo.getDataset2(e,"actiontype");
-		console.log(confArray);
-		console.log(dom);
-
-		let confOBJ=config;
-		for(var i=0;i<confArray.length;i++){
-			confOBJ=confOBJ[confArray[i]];
-		}
-
-		if(type=="edit"){
-			confOBJ=confOBJ[confId];
-		}else{
-			//var newOBJ;//={name:"none",direct:editDirect};
-			//	!editDirect?newOBJ={name:"none"}:newOBJ={name:"none",direct:editDirect};
-			var newOBJ={};
-			if(["txtengine","imgengine","script"].contains(actionType)){
-				newOBJ={name:"none",content:""}
-			}else{
-				!editDirect?newOBJ={name:"none"}:newOBJ={name:"none",direct:editDirect};
-			}
-
-			confOBJ[confOBJ.length]=newOBJ;
-			confOBJ=confOBJ[confOBJ.length-1];
-			//del last id
-			// dom.dataset.close="dellast";
-		}
-		console.log(confOBJ)
-
-		let btnArray=["",suo.getI18n("btn_cancel"),suo.getI18n("btn_save")],
-			btnArrayDel=[suo.getI18n("btn_del"),suo.getI18n("btn_cancel"),suo.getI18n("btn_save")];
-		if(type=="edit"){btnArray=btnArrayDel}
-
-		var titleOBJ={
-			newaction:suo.getI18n("title_newaction"),
-			newengine:suo.getI18n("title_newengine"),
-			newscript:suo.getI18n("title_newscript"),
-			editaction:suo.getI18n("title_editaction"),
-			editengine:suo.getI18n("title_editengine"),
-			editscript:suo.getI18n("title_editscript")
-		}
-
-		let domBox=suo.initAPPbox(btnArray,[400,230],titleOBJ.editaction,"bg",actionType);
-		domBox.dataset.id=confId;
-		domBox.dataset.confid=confId;
-		domBox.dataset.confobj=confArray.join("|");
-		suo.initPos(domBox);
-
-		//del last id when type=new
-		if(type=="new"){
-			domBox.dataset.close="dellast";			
-		}
-
-
-		let domContent=domBox.querySelector(".box_content");
-		console.log(domContent);
-
-		let domTab=suo.domCreate2("div",{setName:["className"],setValue:["box_tab"]});
-			domTab.appendChild(suo.domCreate2("span",{setName:["className"],setValue:["box_tabtitle box_tabtitleactive"]},null,null,{setName:["tab"],setValue:["keys"]},suo.getI18n("con_keys")));
-			domTab.appendChild(suo.domCreate2("span",{setName:["className"],setValue:["box_tabtitle"]},null,null,{setName:["tab"],setValue:["action"]},suo.getI18n("con_actions")));
-			domTab.appendChild(suo.domCreate2("span",{setName:["className"],setValue:["box_tabtitle"]},null,null,{setName:["tab"],setValue:["more"]},suo.getI18n("con_others")));
-		domContent.appendChild(domTab);
-
-		let domTabbox=suo.domCreate2("div",{setName:["className"],setValue:["box_tabbox"]});
-		let domTabListKeys=suo.domCreate2("div",{setName:["className"],setValue:["box_tablist box_tablistkeys box_tablistactive"]},null,null,{setName:["tab"],setValue:["keys"]});
-		let domTabListAction=suo.domCreate2("div",{setName:["className"],setValue:["box_tablist box_tablistaction"]},null,null,{setName:["tab"],setValue:["action"]});
-		let domTabListMore=suo.domCreate2("div",{setName:["className"],setValue:["box_tablist box_tablistmore"]},null,null,{setName:["tab"],setValue:["more"]});
-		domTabbox.appendChild(domTabListKeys);
-		domTabbox.appendChild(domTabListAction);
-		domTabbox.appendChild(domTabListMore);
-		domContent.appendChild(domTabbox);
-
-		domTabListKeys.appendChild(suo.itemKey(confOBJ));
-		domTabListAction.appendChild(suo.itemAction2(confOBJ,"mges"));
-		domTabListAction.appendChild(suo.itemOption(confOBJ,"mges"));
-		// domTabListAction.appendChild(suo.itemDes(confOBJ));
-		// domTabListAction.appendChild(suo.itemMore(confOBJ,"mges"));
-		domTabListMore.appendChild(suo.itemNote(confOBJ,"mges"));
-
-
-
-		// function getele(ele){
-		// 	ele=ele.target||ele;
-		// 	console.log(ele)
-		// 	if(!ele.dataset.actiontype){
-		// 		return arguments.callee(ele.parentNode);
-		// 	}else{
-		// 		return ele;
-		// 	}
-		// }
-		// var ele=getele(e);
-
-		// suo.itemEdit(suo.getDataset(ele,"confobj","value"),suo.getDataset(ele,"confid","value"),null,null,ele.dataset.actiontype);
-	},
 	itemEdit:function(confobj,confid,type,direct,actiontype){
 		console.log(direct);
 		console.log(confobj,confid,type,direct,actiontype)
@@ -2099,14 +1330,12 @@ var suo={
 		}
 		var btnArray=["",suo.getI18n("btn_cancel"),suo.getI18n("btn_save")];
 		var btnArrayDel=[suo.getI18n("btn_del"),suo.getI18n("btn_cancel"),suo.getI18n("btn_save")];
-		if(type=="edit"&&(["mges","tdrg","ldrg","idrg","pop","ctm","txtengine","imgengine","script","touch"].contains(actiontype))){btnArray=btnArrayDel}
+		if(type=="edit"&&(["mges","tdrg","ldrg","idrg","txtengine","imgengine"].contains(actiontype))){btnArray=btnArrayDel}
 		var titleOBJ={
 			newaction:suo.getI18n("title_newaction"),
 			newengine:suo.getI18n("title_newengine"),
-			newscript:suo.getI18n("title_newscript"),
 			editaction:suo.getI18n("title_editaction"),
 			editengine:suo.getI18n("title_editengine"),
-			editscript:suo.getI18n("title_editscript")
 		}
 
 		console.log(type)
@@ -2118,10 +1347,8 @@ var suo={
 		if(type=="edit"){
 			confOBJ=confOBJ[confid];
 		}else{
-			//var newOBJ;//={name:"none",direct:editDirect};
-			//	!editDirect?newOBJ={name:"none"}:newOBJ={name:"none",direct:editDirect};
 			var newOBJ={};
-			if(["txtengine","imgengine","script"].contains(actionType)){
+			if(["txtengine","imgengine"].contains(actionType)){
 				newOBJ={name:"none",content:""}
 			}else{
 				!editDirect?newOBJ={name:"none"}:newOBJ={name:"none",direct:editDirect};
@@ -2137,25 +1364,20 @@ var suo={
 		var domContent=boxOBJ.querySelector(".box_content");
 		direct=direct?direct:(!confOBJ.direct?"":confOBJ.direct);
 		console.log(direct)
-		var actionArray=["mgesactions","tsdrgactions","lsdrgactions","isdrgactions","tdrgactions","ldrgactions","idrgactions","mges","tsdrg","lsdrg","isdrg","tdrg","ldrg","idrg","touch"]
+		var actionArray=["mgesactions","tdrgactions","ldrgactions","idrgactions","mges","tdrg","ldrg","idrg"]
 
-		if(["txtengine","imgengine","script"].contains(actionType)){
+		if(["txtengine","imgengine"].contains(actionType)){
 			console.log("engines")
 			//name
 			domContent.appendChild(suo.domCreate2("label",{setName:["className"],setValue:["box-label"]},null,null,null,suo.getI18n("con_name")));
 			domContent.appendChild(suo.domCreate2("input",{setName:["className","type","value"],setValue:["box_text","text",!confOBJ.name?"":confOBJ.name]}));
 			domContent.appendChild(suo.domCreate2("br"));
-			//url/script
+			//url
 			domContent.appendChild(suo.domCreate2("label",{setName:["className"],setValue:["box-label"]},null,null,null,suo.getI18n("n_content")));
 			domContent.appendChild(suo.domCreate2("textarea",{setName:["className","type","value"],setValue:["box-textarea","textarea",!confOBJ.content?"":confOBJ.content]},"","width:330px;height:160px;margin-top:10px;"));
 			var domDes=boxOBJ.querySelector(".box_des");
 				domDes.style.cssText+="display:block;";
-			if(actionType=="script"){
-				domDes.querySelector("ul").appendChild(suo.domCreate2("li","",null,null,null,"content: type or paste any code which you want."));
-			}else{
 				domDes.querySelector("ul").appendChild(suo.domCreate2("li","",null,null,null,"content: use %s to instead of keywords/image url. you may find some search engines from: chrome://settings/searchEngines."));
-			}
-		//}else if(["mges","tsdrg","lsdrg","isdrg","tdrg","ldrg","idrg"].contains(actionType)){
 		}else if(actionArray.contains(actionType)){
 			var actionBox=suo.domCreate2("div",{setName:["className"],setValue:["actionbox"]});
 			var actionType=actionType;
@@ -2182,24 +1404,6 @@ var suo={
 			domContent.appendChild(_rightbox);
 			domContent.appendChild(suo.domCreate2("div","","","clear:both;"));
 			//\\
-		}else if([/*"tsdrg",*/"lsdrg","isdrg"].contains(actionType)){
-			var actionBox=suo.domCreate2("div",{setName:["className"],setValue:["actionbox"]});
-			var actionType=actionType;
-			var actionName=confOBJ.name;
-			actionBox.appendChild(suo.itemAction(confOBJ,actionType));
-			actionBox.appendChild(suo.itemDes(confOBJ));
-			actionBox.appendChild(suo.itemMore(confOBJ,actiontype));
-			domContent.appendChild(actionBox);
-			domContent.appendChild(suo.domCreate2("div","","","clear:both;"));
-		}else if(actionType=="rges"||actionType=="wges"||actionType=="pop"||actionType=="icon"||actionType=="ctm"||actionType=="dca"){
-			var actionBox=suo.domCreate2("div",{setName:["className"],setValue:["actionbox"]});
-			var actionType=actionType;
-			var actionName=confOBJ.name;
-			actionBox.appendChild(suo.itemAction(confOBJ,actionType));
-			actionBox.appendChild(suo.itemDes(confOBJ));
-			actionBox.appendChild(suo.itemMore(confOBJ,actiontype));
-			domContent.appendChild(actionBox);
-			domContent.appendChild(suo.domCreate2("div","","","clear:both;"));
 		}
 		//document.body.appendChild(boxOBJ);
 		suo.initPos(boxOBJ);
@@ -2239,23 +1443,6 @@ var suo={
 			}
 		}
 	},
-	itemKey:function(confOBJ){
-		console.log("key");
-		console.log(confOBJ);
-		let dom=suo.domCreate2("div",{setName:["className"],setValue:["box_key"]}),
-			_str="<input id='box_ctrl' type='checkbox'"+(confOBJ.ctrl?"checked":"")+"><label for='box_ctrl'>Ctrl</label>"
-			+"<input id='box_alt' type='checkbox'"+(confOBJ.alt?"checked":"")+"><label for='box_alt'>Alt</label>"
-			+"<input id='box_shift' type='checkbox'"+(confOBJ.shift?"checked":"")+"><label for='box_shift'>Shift</label>",
-			// +"<input id='box_reset' type='button' value='"+suo.getI18n("btn_reset")+"' style='height:20px;line-height:20px;min-width:60px;margin:1px;float:right;box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.26);'>",
-			_resetBtn=suo.domCreate2("input",{setName:["className","type","value"],setValue:["box_btnkeyrst","button",suo.getI18n("btn_reset")]},null,null,null);
-			metabox=suo.domCreate2("div",null,_str,"padding:3px 0;");
-			codebox=suo.domCreate2("input",{setName:["type","value","className","readonly","placeholder","title"],setValue:["text",suo.ksa.keyFormat(suo.ksa.keyGet(confOBJ.codes)),"box_keyvalue","",suo.getI18n("tip_enterkeys"),suo.getI18n("tip_enterkeys")]});
-
-		dom.appendChild(codebox);
-		dom.appendChild(_resetBtn);
-		dom.appendChild(metabox);
-		return dom;
-	},
 	itemNote:function(confOBJ,type){
 		var dom=suo.domCreate2("div");
 		var notevalue=confOBJ.note?confOBJ.note.value:"";
@@ -2272,10 +1459,6 @@ var suo={
 		dom.appendChild(_brTextarea);
 		dom.appendChild(_check);
 		dom.appendChild(_label);
-		if(["tsdrg","lsdrg","isdrg"].contains(type)){
-			_check.style.display="none";
-			_label.style.display="none";
-		}
 		return dom;
 	},
 	itemDirect:function(confOBJ,actiontype,direct){
@@ -2283,7 +1466,7 @@ var suo={
 		var direct=direct?direct:confOBJ.direct;
 		var OBJ=suo.domCreate2("div",{setName:["className"],setValue:["box_direct"]},"","",{setName:["direct"],setValue:[direct]});
 		//edit icon
-		var actionArray=["mgesactions","tdrgactions","ldrgactions","idrgactions","mges","touch","tdrg","idrg","ldrg"]
+		var actionArray=["mgesactions","tdrgactions","ldrgactions","idrgactions","mges","tdrg","idrg","ldrg"]
 		if(actionArray.contains(actiontype)){
 			var editOBJ=suo.domCreate2("img",{setName:["className","title","src"],setValue:["box_diredit",suo.getI18n("tip_editdir"),"../image/edit.svg"]});
 			OBJ.appendChild(editOBJ);			
@@ -2311,11 +1494,6 @@ var suo={
 		var valueOBJ={setName:["name","className"],setValue:[actionType,"box_select actionselect"]};
 		var domSelect=suo.domCreate2("select",valueOBJ,null,null,{setName:["actiontype"],setValue:[actionType]});//edom,eele,einner,ecss,edata,etxt
 		var flag=0,index=0;
-		if("tsdrg lsdrg isdrg".indexOf(actionType)!=-1){
-			actionType=actionType.substr(0,1)+actionType.substr(2);
-		}else if(actionType=="rges"||actionType=="wges"||actionType=="pop"||actionType=="icon"||actionType=="ctm"||actionType=="dca"){
-			actionType="mges"
-		}
 		for(var i=0;i<actions[actionType+"_group"].length;i++){
 			var domOptgroup=suo.domCreate2("optgroup",{setName:["label"],setValue:[suo.getI18n(actions[actionType+"_group"][i])]});
 			for(var j=0;j<actions[actionType][i].length;j++){
@@ -2335,11 +1513,6 @@ var suo={
 		var valueOBJ={setName:["name","className"],setValue:[actionType,"box_select actionselect"]};
 		var domSelect=suo.domCreate2("select",valueOBJ,null,null,{setName:["actiontype"],setValue:[actionType]});//edom,eele,einner,ecss,edata,etxt
 		var flag=0,index=0;
-		if("tsdrg lsdrg isdrg".indexOf(actionType)!=-1){
-			actionType=actionType.substr(0,1)+actionType.substr(2);
-		}else if(actionType=="rges"||actionType=="wges"||actionType=="pop"||actionType=="icon"||actionType=="ctm"||actionType=="dca"){
-			actionType="mges"
-		}
 		for(var i=0;i<actions[actionType+"_group"].length;i++){
 			var domOptgroup=suo.domCreate2("optgroup",{setName:["label"],setValue:[suo.getI18n(actions[actionType+"_group"][i])]});
 			for(var j=0;j<actions[actionType][i].length;j++){
@@ -2630,15 +1803,6 @@ var suo={
 			var _content=suo.fixURL(dom.querySelector(".box_content textarea").value);
 			confOBJ.name=_name;
 			confOBJ.content=_content;
-		}else if(confArray[1]=="script"){
-			var _name=dom.querySelectorAll(".box_content input[type=text]")[0].value;
-			var _content=dom.querySelector(".box_content textarea").value;
-			confOBJ.name=_name;
-			confOBJ.content=_content;
-			//if new script , add to jslist's enabled array.
-			if(config.apps&&config.apps.jslist&&config.apps.jslist.enabled&&!config.apps.jslist.enabled.contains(confid.toString())){
-				config.apps.jslist.enabled.push(confid.toString());
-			}
 		}else{
 			var theAction=dom.querySelector(".box_content .actionselect").value;
 
@@ -2679,7 +1843,7 @@ var suo={
 			for(var i=0;i<selectsOBJ.length;i++){
 				var thisOBJ={};
 				thisOBJ.type=selectsOBJ[i].name;
-				thisOBJ.type.indexOf("search")!=-1||thisOBJ.type.indexOf("script")!=-1?thisOBJ.value=selectsOBJ[i].selectedIndex:thisOBJ.value=selectsOBJ[i].value;
+				thisOBJ.type.indexOf("search")!=-1?thisOBJ.value=selectsOBJ[i].selectedIndex:thisOBJ.value=selectsOBJ[i].value;
 				theSelects.push(thisOBJ);
 			}
 			if(theSelects.length>0){
@@ -2763,16 +1927,6 @@ var suo={
 			}
 			//confOBJ.ranges=theRanges;
 
-			//keys
-			var theCodes=[],
-				codesOBJ=dom.querySelector(".box_keyvalue");
-			codesOBJ?theCodes=suo.ksa.keyToCode(codesOBJ.value):null;
-			if(theCodes.length>0){
-				confOBJ.codes=theCodes;
-			}else{
-				confOBJ.codes?(delete confOBJ.codes):null;
-			}
-
 			var codeCtrlOBJ=dom.querySelector(".box_key #box_ctrl"),
 				codeAltOBJ=dom.querySelector(".box_key #box_alt"),
 				codeShiftOBJ=dom.querySelector(".box_key #box_shift");
@@ -2810,7 +1964,6 @@ var suo={
 			// return;
 		}
 		suo.saveConf();
-		suo.initActionEle();
 		editMode=false;
 		console.log(confArray);
 		var actionType=suo.getDataset(e,"actiontype","value");
@@ -2820,7 +1973,7 @@ var suo={
 			suo.boxClose2(e);
 			return
 		}
-		if(!["tdrg","idrg","ldrg","mges","tsdrg","lsdrg","isdrg"].contains(confArray[1])){
+		if(!["tdrg","idrg","ldrg","mges"].contains(confArray[1])){
 			suo.initListItem(confArray[2])
 		}else{
 			suo.initListItem(confArray[1])
@@ -2909,15 +2062,7 @@ var suo={
 		}else{
 			var actionType=confArray[confArray.length-1];
 		}
-		//console.log(actions[actionType])
-		if("tsdrg lsdrg isdrg".indexOf(actionType)!=-1){
-			actionType=actionType.substr(0,1)+actionType.substr(2);
-		}else if(actionType=="rges"||actionType=="wges"||actionType=="pop"||actionType=="icon"||actionType=="ctm"){
-			actionType="mges";
-		}
 		console.log(actionType);
-
-		//let i=0,ii=0,_obj={};
 
 		for(var i=0;i<actions[actionType].length;i++){
 			for(var ii=0;ii<actions[actionType][i].length;ii++){
@@ -2972,140 +2117,15 @@ var suo={
 			getele(ele).querySelector(".box_option").innerHTML="";
 			getele(ele).querySelector(".box_option").appendChild(suo.itemOption(theOBJ,actionType));
 		}
-		// getele(ele).querySelector(".actionbox").appendChild(suo.itemDes(theOBJ));
-		// getele(ele).querySelector(".actionbox").appendChild(suo.itemMore(theOBJ,actionType));
 		return;
 	},
-	getPermission:function(permission){
-		chrome.permissions.request({permissions:permission/*["contentSettings"]*/},function(granted){
-			if(!granted) {
-			} 
-		});
-	},
-	checkPermission:function(thepers,theorgs,theFunction,msg){
-		if(thepers&&theorgs){
-			chrome.permissions.contains({permissions: thepers,origins:theorgs},function(result){checkPers(result)})
-		}else if(thepers){
-			chrome.permissions.contains({permissions: thepers},function(result){checkPers(result)})
-		}else if(theorgs){
-			chrome.permissions.contains({origins:theorgs},function(result){checkPers(result)})
-		}
-		var getPers=function(thepers,theorgs){
-			console.log("get");
-			chrome.runtime.sendMessage({type:"opt_getpers",value:{thepers:thepers,theorgs:theorgs,theFunction:theFunction,msg:msg}});
-			//chrome.runtime.sendMessage({type:"opt_getpers"},function(response){});
-			return;
-			sub.cons.permissions={
-				pers:thepers,
-				orgs:theorgs
-			}
-			msg?sub.cons.permissions.msg=msg:null;
-			chrome.windows.create({url:"../html/getpermissions.html",focused:true,type:"popup",width:800,height:500})
-			return;
-		}
-		var checkPers=function(result){
-			if (result) {
-				if(theFunction){
-					theFunction();
-				}
-			}else {
-				getPers(thepers,theorgs);
-			}
-		}
-	},
-	confImport:function(){
-		var file=document.querySelector("#import_file").files[0];
-		var reader=new FileReader();
-		let importedConfig={};
-		reader.readAsText(file);
-		reader.onload=function(e){
-			var str=Base64.decode(e.target.result);
-			console.log("sdf")
-			try{
-				importedConfig=JSON.parse(str);
-				console.log(importedConfig)
-				if(importedConfig.general){
-					if(importedConfig.version>config.version){
-						alert(suo.getI18n("msg_importver"));
-						return;
-					}
-					localStorage.setItem("sync",importedConfig.general.sync.autosync.toString());
-					config={};
-					config=importedConfig;
-					suo.saveConf2();
-					window.setTimeout(function(){window.location.reload();},1000);
-				}	
-			}
-			catch(error){
-				console.log(error)
-				alert(suo.getI18n("msg_confimport"))
-			}
-		}
-	},
-	confExport:function(){
-		// let theConf={};
-		// if(localStorage.getItem("sync")=="true"){
-		// 	theConf=config;
-		// }
-
-		var _conf=config;
-		if(_conf.local){delete _conf.local}
-
-		var blob = new Blob([JSON.stringify(_conf)]);
-		var reader=new FileReader();
-		reader.readAsDataURL(blob)
-		reader.onload=function(e){
-			var str=e.target.result.substr(e.target.result.indexOf("base64,")+7);
-			var newBlob=new Blob([str]);
-			var a=document.createElement("a");
-			a.id="btn_export";
-			a.href=window.URL.createObjectURL(newBlob);
-			a.download="smartup.config";
-			a.textContent=suo.getI18n("con_export");
-			document.querySelector("#export_tip").textContent="";
-			document.querySelector("#export_tip").appendChild(a);
-		}
-	},
-	initActionEle:function(){
-		return
-		actionOptions.selects.script=[]//actionOptions.selects.txtengine=actionOptions.selects.imgengine=[];
-		actionOptions.selects.txtengine=[];
-		actionOptions.selects.imgengine=[];
-		actionOptions.selects.txtenginevalue=[];
-		for(var i=0;i<config.general.script.script.length;i++){
-			actionOptions.selects.script.push(config.general.script.script[i]["name"])
-		}
-		for(var i=0;i<config.general.engine.txtengine.length;i++){
-			actionOptions.selects.txtengine.push(config.general.engine.txtengine[i]["name"]);
-			actionOptions.selects.txtenginevalue.push(config.general.engine.txtengine[i]["url"]);
-		}
-		for(var i=0;i<config.general.engine.imgengine.length;i++){
-			actionOptions.selects.imgengine.push(config.general.engine.imgengine[i]["name"]);
-			//actionOptions.selects.imgenginevalue.push(config.general.engine.imgengine[i]["url"]);
-		}
-		//console.log("fn_initActionEle")
-	},
 	initEnd:function(){
-		if(config.general.settings.autosave){
-			document.querySelector("#menuplus_save").style.display="none";
-			document.querySelector(".nav_btn_save").style.display="none";
-		}else{
-			document.querySelector("#menuplus_save").style.display="block";
-			document.querySelector(".nav_btn_save").style.display="inline-block";
-		}
-
 		suo.fixSizePos();
 		// document.querySelector("#ext_ver").innerText=chrome.runtime.getManifest().version;
 		// document.querySelector("#nav_txt").innerText=suo.getI18n("ext_name");
-		// document.querySelector("#about_title").innerText=suo.getI18n("ext_name");
 		document.title=suo.getI18n("opt_title")+" - "+suo.getI18n("ext_name");
 		
 		document.querySelector("#main").style.cssText+="opacity:1;transition:all .9s ease-in-out;display:block;";
-
-		document.querySelector("#abmain_name").innerText=suo.getI18n("ext_name");
-		document.querySelector("#abmain_des").innerText=suo.getI18n("ext_des");
-		document.querySelector("#abinfo_ver").innerText+=chrome.runtime.getManifest().version;
-
 
 		document.querySelector("#loadingbox").style.cssText+="opacity:0;"
 		window.setTimeout(function(){
@@ -3113,23 +2133,6 @@ var suo={
 			suo.cons.menuPin?null:suo.menuBarCreate();
 		},400)
 
-		document.querySelector("#import_file").onchange=function(){
-			suo.confImport();
-		}
-		suo.setTheme();
-		suo.initLog();
-		//show log
-		if(localStorage.getItem("showlog")=="true"){
-			suo.clickMenuDiv(document.querySelector("div[data-confobj='about']"));
-			suo.clickMenuLI(document.querySelector("li[data-id0='13'][data-id1='0']"));
-			localStorage.removeItem("showlog");
-		}
-		//show about
-		if(localStorage.getItem("showabout")){
-				suo.clickMenuDiv(document.querySelector("div[data-confobj='about']"));
-				suo.clickMenuLI(document.querySelector("li[data-id0='13'][data-id1='0']"));
-				localStorage.removeItem("showabout");
-		}
 		//init webstore url
 		if(browserType=="cr"){
 			if(devMode){
@@ -3141,10 +2144,6 @@ var suo={
 			suo.cons.webstoreURL="https://addons.mozilla.org/firefox/addon/smartup";
 		}else if(browserType=="edg"){
 			suo.cons.webstoreURL="https://microsoftedge.microsoft.com/addons/detail/elponhbfjjjihgeijofonnflefhcbckp";
-		}
-		//disable option auto sync
-		if(!chrome.storage.sync){
-			document.querySelector("input[data-confele=autosync]").disabled=true;
 		}
 
 		//browsersettings
@@ -3159,83 +2158,6 @@ var suo={
 				document.querySelector("[data-confele=cancelmenu]").disabled=true;
 			}
 		}):null
-
-		//init ads
-		if(!config.about||!config.about.donatedev||config.about.donatedev.ad){
-			suo.donateBox.init();
-		}
-	},
-	initBoxBtn:function(dom,btn){
-		var dombtn=dom.querySelectorAll(".box_submit input[type=button]");
-		for(var i=0,i_btn=0;i<btn.length;i++){
-			if(btn[i]){
-				dombtn[i].value=btn[i];
-			}else{
-				i_btn++;
-				dombtn[i].remove();
-			}
-		}
-	},
-	initLog:function(){
-		console.log("log")
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange=function(){
-			if (xhr.readyState == 4){
-				var xhrLog=JSON.parse(xhr.response);
-				var domlog=document.querySelector(".set.set-135.confobj>.setcontent");
-					domlog.textContent=""
-
-				var _detailsMore=suo.domCreate2("details");
-				var _summaryMore=suo.domCreate2("summary",null,null,null,null,"more...");
-				_detailsMore.appendChild(_summaryMore);
-
-				for(var i=0;i<xhrLog.log.length;i++){
-					if(i>8){
-						var dom=suo.domCreate2("details");
-						var _summary=suo.domCreate2("summary",null,null,null,null,xhrLog.log[i].ver+" - "+xhrLog.log[i].date);
-						var _ul=suo.domCreate2("ul");
-						for(var ii=0;ii<xhrLog.log[i].content.length;ii++){
-							var _li=suo.domCreate2("li",null,null,null,null,xhrLog.log[i].content[ii]);
-							_ul.appendChild(_li);
-						}
-						dom.appendChild(_summary);
-						dom.appendChild(_ul);
-						_detailsMore.appendChild(dom);
-						domlog.appendChild(_detailsMore);
-					}else{
-						var dom=suo.domCreate2("details");
-							dom.open="open";
-						var _summary=suo.domCreate2("summary",null,null,null,null,xhrLog.log[i].ver+" - "+xhrLog.log[i].date);
-						var _ul=suo.domCreate2("ul");
-						for(var ii=0;ii<xhrLog.log[i].content.length;ii++){
-							var _li=suo.domCreate2("li",null,null,null,null,xhrLog.log[i].content[ii]);
-							_ul.appendChild(_li);
-						}
-						dom.appendChild(_summary);
-						dom.appendChild(_ul);
-						domlog.appendChild(dom);						
-					}
-				}
-				// var _details=suo.domCreate2("details");
-				// var _summary=suo.domCreate2("summary",null,null,null,null,"more...");
-				// _details.appendChild(_summary);
-				for(var i=0;i<xhrLog.oldlog.length;i++){
-					var dom=suo.domCreate2("details");
-					var _summary=suo.domCreate2("summary",null,null,null,null,xhrLog.oldlog[i].ver+" - "+xhrLog.oldlog[i].date);
-					var _ul=suo.domCreate2("ul");
-					for(var ii=0;ii<xhrLog.oldlog[i].content.length;ii++){
-						var _li=suo.domCreate2("li",null,null,null,null,xhrLog.oldlog[i].content[ii]);
-						_ul.appendChild(_li);
-					}
-					dom.appendChild(_summary);
-					dom.appendChild(_ul);
-					_detailsMore.appendChild(dom);
-				}
-				// domlog.appendChild(_details);
-			}
-		}
-		xhr.open('GET',"../change.log", true);
-		xhr.send();
 	},
 	fixURL:function(url){
 		//if()
@@ -3271,7 +2193,6 @@ var suo={
 	menuBarCreate:function(){
 		if(window.getComputedStyle(document.querySelector("#menu_topbox")).display=="none"){
 			document.querySelector("#menu_topbox").style.cssText+="display:block;";
-			document.querySelector("#menu_bottom").style.cssText+="bottom:0px;";
 		}
 
 		document.body.appendChild(suo.domCreate2("div",{setName:["id"],setValue:["menu_bg"]},"","background-color:rgba(0,0,0,.8);"));
@@ -3321,16 +2242,13 @@ var suo={
 		if(suo.cons.menuPin){
 			document.querySelector("menu").style.cssText+="left: 0px;top: 64px;";
 			//document.querySelector("#nav_txt").style.cssText+="margin-left:58px;";
-			document.querySelector("#menu_bottom").style.cssText+="bottom:64px;";
 			document.querySelector("menu #menu_logo").style.cssText+="margin-left:180px;";
 			window.setTimeout(function(){document.querySelector("menu #menu_name").style.cssText+="display:inline;"
 				document.querySelector("menu #menu_name").style.cssText+="opacity:1;";
 			},800)
 			document.querySelector("#menubox").style.height=(window.innerHeight-64-80-40+75-40)+"px";
-			//document.querySelector("#menu_bottom").style.cssText+="bottom:0px;";
 		}else{
 			document.querySelector("menu").style.cssText+="left: -260px;top: 0;";
-			document.querySelector("#menu_bottom").style.cssText+="bottom:0 ;";
 			document.querySelector("menu #menu_logo").style.cssText+="margin-left:0;";
 			document.querySelector("menu #menu_name").style.cssText+="display:none;opacity:0;";
 			document.querySelector("#menubox").style.height=(window.innerHeight-64-80-40+60)+"px";
@@ -3378,15 +2296,11 @@ var suo={
 		}
 		var confid=confOBJ.length;
 
-		if(["engine","script"].contains(confArray[1])){
+		if(["engine"].contains(confArray[1])){
 			suo.itemEdit(confobj,confid,"add",null,confArray[2]);
 			return;
 		}
-		if(confArray[0]=="pop"||confArray[0]=="ctm"){//function(confobj,confid,type,direct,actiontype)
-			suo.itemEdit(confobj,confid,"add",null,confArray[0]);
-			return;
-		}
-		var testdes=suo.getI18n("test_"+((confArray[0]=="mges"||confArray[0]=="touch")?"mges":confArray[1]));
+		var testdes=suo.getI18n("test_"+((confArray[0]=="mges")?"mges":confArray[1]));
 		var btnArray=["",suo.getI18n("btn_cancel"),suo.getI18n("btn_done")];
 		let testDom=suo.domCreate2("div",{setName:["className"],setValue:["testbox"]},null,null,null,testdes);
 		if(confArray[1]=="ldrg"){
@@ -3418,7 +2332,7 @@ var suo={
 		suo.boxClose2(suo.getAPPboxEle(e));
 		editMode=true;
 		var confArray=confobj.split("|");
-		var testdes=suo.getI18n("test_"+((confArray[0]=="mges"||confArray[0]=="touch")?"mges":confArray[1]));
+		var testdes=suo.getI18n("test_"+((confArray[0]=="mges")?"mges":confArray[1]));
 		var btnArray=["",suo.getI18n("btn_cancel"),suo.getI18n("btn_done")];
 		var addOBJ=suo.initAPPbox(btnArray,[480,320],suo.getI18n("title_editdirect"),"bg",suo.getDataset(e,"actiontype","value"));
 			addOBJ.classList.add("su_app_test");
@@ -3546,169 +2460,6 @@ var suo={
 			}
 		}
 		return [confobj,confid,editDirect]
-	},
-	setTheme:function(from){
-		var themediv=document.createElement("link");
-			themediv.href="../css/theme_colorful.css";
-			themediv.type="text/css";
-			themediv.rel="stylesheet";
-		document.body.appendChild(themediv);
-		document.body.style.cssText+="background:#d0d9ff !important;"
-	},
-	donateBox:{
-		init:function(){
-			chrome.runtime.sendMessage({type:"getDonateData"},function(response){
-				console.log(response.value);
-				suo.cons.donateData=response.value;
-				suo.donateBox.show();
-				suo.donateBox.dom(response.value);
-			})
-		},
-		dom:function(items){
-			let domMain=document.querySelector("#donate_main"),
-				domList=document.querySelector("#donate_list"),
-				domContent=document.querySelector("#donate_content");
-			domList.textContent="";
-			domContent.textContent="";
-			let initDom=function(itemOBJ,id){
-				console.log(itemOBJ);
-				var _list=suo.domCreate2("li",{setName:["className","title"],setValue:["donate_listli",itemOBJ.name]},null,null,{setName:["id"],setValue:[id]},itemOBJ.name);
-				domList.appendChild(_list);
-				var _content=suo.domCreate2("div",{setName:["className"],setValue:["donate_contentlist"]},null,null,{setName:["id"],setValue:[id]});
-				switch(itemOBJ.type){
-					case"cryptocurrency":
-						console.log("cryptocurrency")
-						var _ccul=suo.domCreate2("ul",{setName:["className"],setValue:["donate_ccul"]});
-						// _ccul.appendChild(suo.domCreate2("span",null,null,null,null,"Network Type:"))
-						for(var i=0;i<itemOBJ.data.length;i++){
-							_ccul.appendChild(suo.domCreate2("li",{setName:["className"],setValue:["donate_ccli"]},null,null,{setName:["id"],setValue:[i]},itemOBJ.data[i].name));
-						}
-
-
-						var _ccdiv=suo.domCreate2("div",{setName:["className"],setValue:["donate_ccdiv"]});
-						for(var i=0;i<itemOBJ.data.length;i++){
-							var _cccontent=suo.domCreate2("div",{setName:["className"],setValue:["donate_cccontent"]},null,null,{setName:["id"],setValue:[i]});
-
-							_cccontent.appendChild(suo.domCreate2("textarea",{setName:["className","readOnly"],setValue:["donate_cctext",true]},null,null,{setName:["id"],setValue:[i]},itemOBJ.data[i].address));
-							var _ccqr=suo.domCreate2("div");
-							new QRCode(_ccqr,itemOBJ.data[i].address);
-							_cccontent.appendChild(_ccqr);
-
-							_ccdiv.appendChild(_cccontent);
-						}
-						
-						_content.appendChild(_ccul);
-						_content.appendChild(_ccdiv);
-						break;
-					case"text":
-						var _text=document.createElement("span");
-							_text.textContent=itemOBJ.text;
-						_content.appendChild(_text);	
-						break;
-					case"img":
-						var _img=document.createElement("img");
-							_img.src=itemOBJ.url;
-						_content.appendChild(_img);	
-						break;
-					case"link":
-						var _link=document.createElement("a");
-							_link.href=itemOBJ.url;
-							_link.target="_blank";
-							_link.textContent=itemOBJ.text;
-						_content.appendChild(_link);
-						break;
-					case"linkimg":
-						var _a=suo.domCreate2("a",{setName:["href","target"],setValue:[itemOBJ.url,"_blank"]});
-						var _img=suo.domCreate2("img",{setName:["src"],setValue:[itemOBJ.img]});
-						_a.appendChild(_img);
-						_content.appendChild(_a);
-						break;
-					case"qrcode":
-						console.log("qr")
-						var _qrcode=document.createElement("div");
-						new QRCode(_qrcode,itemOBJ.code);
-						_content.appendChild(_qrcode);
-						break;
-				}
-				domContent.appendChild(_content);
-				// return _list;
-			}
-			for(var i=0;items.donate&&items.donate[0]&&items.donate[0].length>0&&i<items.donate[0].length;i++){
-				initDom(items.donate[0][i],i);
-			}
-			let _flag=i;
-			for(var i=0;items.ad&&items.ad[0]&&items.ad[0].length>0&&i<items.ad[0].length;i++){
-				initDom(items.ad[0][i],_flag+i);
-			}
-			suo.donateBox.switch(document.querySelectorAll("#donate_list li")[0]);
-
-			//if cryptocurrency show the first one
-			if(items&&items.donate&&items.donate[0][0].type=="cryptocurrency"){
-				console.log("cc")
-				suo.donateBox.switchCcli(document.querySelector("#donate_content li.donate_ccli[data-id='0']"))
-			}
-
-
-		},
-		switchCcli:function(dom){
-			console.log(dom)
-			let lists=document.querySelectorAll("#donate_main .donate_ccli"),
-				contents=document.querySelectorAll("#donate_main .donate_cccontent");
-
-			console.log(contents)
-			for(var i=0;i<lists.length;i++){
-				if(lists[i].classList.contains("donate_listcurrent")){
-					lists[i].classList.remove("donate_listcurrent");
-				}
-			}
-			dom.classList.add("donate_listcurrent");
-			for(var i=0;i<contents.length;i++){
-				if(contents[i].classList.contains("donate_contentcurrent")){
-					contents[i].classList.remove("donate_contentcurrent");
-				}
-			}
-			console.log(dom.dataset.id)
-			document.querySelector(".donate_ccdiv .donate_cccontent[data-id='"+dom.dataset.id+"']").classList.add("donate_contentcurrent");
-		},
-		switch:function(dom){
-			let lists=document.querySelectorAll("#donate_main #donate_list li"),
-				contents=document.querySelectorAll("#donate_main #donate_content .donate_contentlist");
-
-			console.log(contents)
-			for(var i=0;i<lists.length;i++){
-				if(lists[i].classList.contains("donate_listcurrent")){
-					lists[i].classList.remove("donate_listcurrent");
-				}
-			}
-			dom.classList.add("donate_listcurrent");
-			for(var i=0;i<contents.length;i++){
-				if(contents[i].classList.contains("donate_contentcurrent")){
-					contents[i].classList.remove("donate_contentcurrent");
-				}
-			}
-			console.log(dom.dataset.id)
-			document.querySelector(".donate_contentlist[data-id='"+dom.dataset.id+"']").classList.add("donate_contentcurrent");
-		},
-		show:function(){
-			document.querySelector("#menu_donate").style.cssText+="display:block;";
-		},
-		showDonate:function(){
-			document.querySelector("#donate_box").style.cssText+="display:block;";
-			document.querySelector("#donate_loading").style.cssText+="display:none;";
-			// domMain.style.cssText+="display:block;";
-			document.querySelector("#donate_main").style.cssText+="display:block;";
-			document.querySelector("#donate_btn_close").style.cssText+="display:block;";
-			// document.querySelector("#donate_btn_hide").style.cssText+="display:block;";
-		},
-		hideDonate:function(ele){
-			console.log(ele);
-			document.querySelector("#donate_btn_close").style.cssText+="display:none;";
-			// document.querySelector("#donate_btn_hide").style.cssText+="display:none;";
-			document.querySelector("#donate_main").style.cssText+="display:none;";
-			if(ele.id=="donate_btn_close"){
-				document.querySelector("#donate_box").style.cssText+="display:none;";
-			}
-		}
 	}
 }
 chrome.runtime.sendMessage({type:"opt_getconf"},function(response){
@@ -3717,7 +2468,6 @@ chrome.runtime.sendMessage({type:"opt_getconf"},function(response){
 	config=response.config;
 	suo.cons.os=response.os;
 	devMode=response.devMode;
-	suo.cons.donateData=response.donateData;
 	suo.cons.reason=response.reason;
 	suo.begin();
 })
@@ -3728,9 +2478,11 @@ chrome.runtime.onMessage.addListener(function(message,sender,sendResponse){
 			window.setTimeout(function(){
 				location.reload();
 			},6000);
+			sendResponse({});
 			break;
 		case"confOK":
 			suo.showMsgBox();
+			sendResponse({});
 			break;
 	}
 });

@@ -176,11 +176,6 @@ nav #nav_img{
 	width: 24px;
 	height: 24px;
 	padding: 20px;
-/* 	background:url('../image/menu.svg') transparent center center no-repeat;
-top: 8px;
-width: 48px;
-z-index: 2;
-position: fixed; */
 }
 #nav_img:hover{
 	cursor: pointer;
@@ -234,17 +229,6 @@ nav .nav_svg{
 	right: 10px;
 }
 
-/*nav #nav_menu{
-	background:url('../image/menuplus.svg') transparent center center no-repeat;
-	background-size: 10px;
-}
-nav #nav_menu:hover{
-	cursor: pointer;
-	background-color: rgba(255,255,255,.1) !important;
-}
-nav .nav_menu{
-	cursor: pointer;
-}*/
 menu{
 	margin: 0;
 	padding: 0;
@@ -1490,15 +1474,6 @@ select:hover{
 	height: 16px;
 	line-height: 16px;
 	margin: 5px 0;
-}
-#abinfo_git{
-	background-image: url(../image/github.svg);
-}
-#abinfo_fb{
-	background-image: url(../image/issue.svg);
-}
-#abinfo_ver,#abinfo_vers{
-	background-image: url(../image/version.svg);
 }
 
 #about_des{
