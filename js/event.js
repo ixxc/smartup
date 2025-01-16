@@ -9,12 +9,8 @@ Array.prototype.contains=function (ele) {
 var editMode,editDirect,browserType;
 var config={};
 let devMode,
-	extDisable=false,
-	appType={},
-	extID="jialbkkmibnohldjdhbdckemnpdpngeb";
-	
+	extID;
 
-//check browser
 if(navigator.userAgent.toLowerCase().indexOf("firefox")!=-1){
 	browserType="fx";
 }else if(navigator.userAgent.toLowerCase().indexOf("edge")!=-1){
@@ -38,20 +34,8 @@ var sue={
 	apps:{
 		enable:false,
 	},
-	resetConsoleLog:function(){
-		if(devMode){
-
-		}else{
-			console.log=function(){return;}
-		}
-	},
 	init:function(){
 		!devMode && (console.log = () => {});
-
-		if (config.general.exclusion?.exclusion && sue.exclusionMatch(config.general.exclusion.exclusiontype)) {
-			console.log("dddd");
-			return;
-		}
 
 		sue.initHandle();
 		sue.uistyle={};
@@ -66,12 +50,7 @@ var sue={
 		}
 	},
 	initHandle:function(){
-		if(config.general.fnswitch.fntouch){
-			document.addEventListener("touchstart",this.handleEvent,false);
-			document.addEventListener("touchmove",this.handleEvent,false);
-			document.addEventListener("touchend",this.handleEvent,false);
-		}
-		if(config.general.fnswitch.fnmges||config.general.fnswitch.fnrges||config.general.fnswitch.fnwges){
+		if(config.general.fnswitch.fnmges){
 			console.log("initHandle")
 			document.addEventListener("mousedown",this.handleEvent,false);
 			document.addEventListener("mouseup",this.handleEvent,false);
@@ -79,23 +58,11 @@ var sue={
 			document.addEventListener("mouseover",this.handleEvent,false);
 			document.addEventListener("contextmenu",this.handleEvent,false);
 		}
-		if(config.general.fnswitch.fndrg||config.general.fnswitch.fnsdrg){
+		if(config.general.fnswitch.fndrg){
 			window.addEventListener("dragstart",this.handleEvent,false);
 			window.addEventListener("drag", this.handleEvent,false);
 			window.addEventListener("dragover",this.handleEvent,false);
 			window.addEventListener("dragend",this.handleEvent,false);
-		}
-		if(config.general.settings.esc){
-			window.addEventListener("keydown",this.handleEvent,false);
-		}
-		if(config.general.fnswitch.fnrges||config.drg.settings.clickcancel){
-			document.addEventListener("click",this.handleEvent,false);
-		}
-		if(config.general.fnswitch.fnwges){
-			window.addEventListener("wheel",this.handleEvent,false);
-		}
-		if(config.general.fnswitch.fndca){
-			window.addEventListener("dblclick",this.handleEvent,false);
 		}
 	},
 	initHandle2:function(){
@@ -105,79 +72,16 @@ var sue={
 	},
 	handleEvent:function(e){
 		switch(e.type){
-			case"touchstart":
-				if(!config.general.fnswitch.fntouch){return;}
-				if(e.touches.length!=1){
-					sue.drawing?sue.clearUI():null;
-					break;
-				}else{
-					sue.lineDrawReady_touch(e,"touch");
-				}
-				break;
-			case"touchmove":
-				if(sue.drawing&&e.touches.length==1){
-					sue.touchMove(e);
-				}else{
-					sue.clearUI();
-				}
-				break;
-			case"touchend":
-				sue.touchEnd(e);
-				break;
 			case"wheel":
-				if(!extDisable&&config.general.fnswitch.fnwges&&(e.buttons==1||e.buttons==2)){
-					sue.inWges=true;
-					sue.clearUI();//clear mouse gesture
-					var sendValue={
-						button:e.button,
-						buttons:e.buttons,
-						wheelDelta:e.deltaY
-					}
-
-					chrome.runtime.sendMessage(extID,{type:"action_wges",sendValue:sendValue,selEle:sue.selEle})
-					// e.preventDefault();
-				}
 				break;
 			case"click":
-				if(sue.inRges){
-					e.preventDefault();
-					if(browserType=="fx"&&e.button==2){
-						sue.inRges=true;//fix firefox, it is click before contextmenu
-					}else{
-						sue.inRges=false;
-					}
-				}
-				if(sue.inWges){
-					e.preventDefault();
-					if(browserType=="fx"&&e.button==2){
-						sue.inWges=true;
-					}else{
-						sue.inWges=false;//fix firefox, it is click before contextmenu
-					}
-				}
 				if(sue.inDrg&&config.drg.settings.clickcancel){console.log("cancel");sue.break=true;sue.stopMges(e);}
 				break;
-			case"keydown":
-				// console.log(e.keyCode);
-				if(!editMode&&config.general.fnswitch.fnksa){
-					sue.ksa.action(e);
-				}
-				if(e.keyCode==27){
-					sue.break=true;
-					sue.stopMges(e);
-				}
-				break;
 			case"mousedown":
-				if(!extDisable
-					&&config.general.fnswitch.fnmges
+				if(config.general.fnswitch.fnmges
 					&&e.buttons==config.mges.settings.model
 					&&!e[config.mges.settings.holdkey+"Key"]){
 						sue.lineDrawReady(e,"mges");
-				}
-				//fix rges mouseup bug
-				if(!extDisable&&config.general.fnswitch.fnrges){
-					console.log(e.buttons);
-					sue.cons.rges_btn=e.button;
 				}
 				break;
 			case"mouseup":
@@ -191,31 +95,12 @@ var sue={
 					sue._lastX=e.clientX;
 					sue._lastY=e.clientY;
 				}
-				if(!extDisable&&config.general.fnswitch.fnrges&&(e.buttons==1||e.buttons==2)&&(e.button==0||e.button==2)){
-					console.log(e.button+"/"+e.buttons+"/"+sue.cons.rges_btn)
-					if(e.button!=sue.cons.rges_btn){break;}//fix mouseup bug
-					sue.inRges=true;
-					var sendValue={
-						buttons:e.buttons
-					}
-					chrome.runtime.sendMessage(extID,{type:"action_rges",sendValue:sendValue,selEle:sue.selEle},function(response){})
-				}
 				break;
 			case"contextmenu":
 				if(config.general.linux.cancelmenu
 					&&sue.cons.os!="win"){
 						//fix mges
 						if(config.general.fnswitch.fnmges&&!sue.cons.fix_linux_value&&config.mges.settings.model==2){
-							e.preventDefault();
-						}
-
-						//fix rges
-						if(config.general.fnswitch.fnrges&&!sue.cons.fix_linux_value&&config.rges.actions[1].name!="none"){
-							e.preventDefault();
-						}
-
-						//fix wges
-						if(config.general.fnswitch.fnwges&&!sue.cons.fix_linux_value&&!(config.wges.actions[2].name=="none"&&config.wges.settings[3].name=="none")){
 							e.preventDefault();
 						}
 
@@ -234,28 +119,12 @@ var sue={
 						sue._lastX=e.clientX;
 						sue._lastY=e.clientY;					
 					}
-
-					//fix wges
-					if(sue.inWges){
-						sue.inWges=false;
-						e.preventDefault();
-					}
-					//fix rges
-					if(sue.inRges){
-						sue.inRges=false;
-						e.preventDefault();
-					}
 					//e.preventDefault();
 				}
 				//none popup menu by timeout
 				if(config.general.settings.timeout_nomenu&&sue.timeout_nomenu){
 					sue.timeout_nomenu=false;
 					e.preventDefault();
-				}
-				//fix switchtab by rges or wges
-				if(sue.cons.switchtab&&sue.cons.switchtab.contextmenu){
-					e.preventDefault();
-					sue.cons.switchtab.contextmenu=false;
 				}
 				// fix context menu selected elements
 				sue.selEle={};
@@ -272,10 +141,8 @@ var sue={
 				}
 				break;
 			case"dragstart":
-				if(!extDisable
-					&&((config.general.fnswitch.fndrg&&!e[config.drg.settings.holdkey+"Key"])
-										||(config.general.fnswitch.fnsdrg&&!e[config.sdrg.settings.holdkey+"Key"]))){
-					sue.lineDrawReady(e,config.general.fnswitch.fndrg?"drg":"sdrg");
+				if(config.general.fnswitch.fndrg&&!e[config.drg.settings.holdkey+"Key"]){
+					sue.lineDrawReady(e,"drg");
 					
 					sue.inDrg=true;
 				}
@@ -307,75 +174,6 @@ var sue={
 				sue._lastY=e.clientY;
 				sue.inDrg=false;
 				break;
-			case"dblclick":
-				console.log("sdf");
-				if(!editMode){
-					if(!config.dca.settings.box&&(e.target.tagName&&((e.target.tagName.toLowerCase()=="input"&&e.target.type=="text")||e.target.tagName.toLowerCase()=="textarea"))){
-						console.log("ss")
-						break;
-					}
-					if(config.dca.settings.confirm&&!window.confirm(chrome.i18n.getMessage("dca_confirmmessage"))){
-						break;
-					}
-					if(config.dca.settings.selnothing&&window.getSelection().toString().trim()!=""){
-						break;
-					}
-					//cancel dca when on some elements: select, radio, button,
-					if(e.target.tagName.toLowerCase()=="select"
-						||e.target.tagName.toLowerCase()=="button"
-						||(e.target.tagName.toLowerCase()=="input"&&e.target.type=="text")
-						||(e.target.tagName.toLowerCase()=="input"&&e.target.type=="checkbox")
-						||(e.target.tagName.toLowerCase()=="input"&&e.target.type=="radio")
-						||(e.target.tagName.toLowerCase()=="input"&&e.target.type=="range")
-						||(e.target.tagName.toLowerCase()=="input"&&e.target.type=="color")
-						){
-						break;
-					}
-					chrome.runtime.sendMessage(extID,{type:"action_dca",sendValue:sendValue,selEle:sue.selEle});
-				}	
-				break;
-		}
-	},
-	exclusionMatch:(type)=>{
-		const patterns = config.general.exclusion[type];
-		const url = `${window.location.host}${window.location.pathname.replace(/\/$/, "")}`;
-		const regexes = patterns.map(pattern => new RegExp('^' + pattern.replace(/\*/g, '.*') + '$'));
-		console.log(regexes);
-		const exclusion= regexes.some(regex => regex.test(url));
-		return type === "black" ? exclusion : !exclusion;
-	},
-	ksa:{
-		timeout:null,
-		keyArray:[],
-		action:function(e){
-			if(e.target.tagName.toLowerCase()=="input"
-				||e.target.tagName.toLowerCase()=="textarea"
-				||e.keyCode==16
-				||e.keyCode==17
-				||e.keyCode==18){
-					return
-			}
-			sue.ksa.keyArray.push(e.keyCode)	
-			var key={
-				alt:e.altKey,
-				shift:e.shiftKey,
-				ctrl:e.ctrlKey,
-				codes:sue.ksa.keyArray
-			}
-			for(var i=0;i<config.ksa.actions.length;i++){
-				if(key.ctrl==config.ksa.actions[i].ctrl
-					&&key.alt==config.ksa.actions[i].alt
-					&&key.shift==config.ksa.actions[i].shift
-					&&key.codes.toString()==config.ksa.actions[i].codes.toString()){
-						var selEle={txt:window.getSelection().toString()}
-						chrome.runtime.sendMessage(extID,{type:"action_ksa",selEle:selEle,id:i},function(response){})
-						break;
-				}
-			}
-			// window.clearTimeout(sue.ksa.timeout);
-			sue.ksa.timeout=window.setTimeout(function(){
-				sue.ksa.keyArray=[];
-			},config.ksa.settings.timeout)
 		}
 	},
 	domCreate:function(edom,eele,einner,ecss,edata,etxt){
@@ -409,108 +207,6 @@ var sue={
 		var reg=/^((http|https|ftp):\/\/)?(\w(\:\w)?@)?([0-9a-z_-]+\.)*?([a-z0-9-]+\.[a-z]{2,6}(\.[a-z]{2})?(\:[0-9]{2,6})?)((\/[^?#<>\/\\*":]*)+(\?[^#]*)?(#.*)?)?$/i; 
 		return reg.test(txt.trim());
 	},
-	lineDrawReady_touch:function(e,type){
-		e=e.targetTouches?e.targetTouches[0]:e;
-
-		sue._lastX=e.clientX;
-		sue._lastY=e.clientY;
-		sue._startX=e.clientX;
-		sue._startY=e.clientY;
-		sue._dirArray="";
-		sue.drawing=true;
-
-		sue.selEle={};
-		sue.selEle.txt=window.getSelection().toString();
-		// fix firefox get selection frome textbox
-		if(browserType=="fx"){
-			if(e.target.tagName.toLowerCase=="textarea"||(e.target.tagName.toLowerCase=="input"&&e.target.type=="text")){
-				sue.selEle.txt=e.target.value.substring(e.target.selectionStart,e.target.selectionEnd);
-			}
-		}
-		sue.selEle.lnk=e.href||e.target.href;
-		sue.selEle.img=sue.selEle.img?sue.selEle.img:e.target.src;
-		sue.selEle.str=e.target.innerText;
-		sue.startEle=e.target;
-
-		//txt to url
-		if(config[type].settings.txttourl&&sue.regURL(sue.selEle.txt)){
-			sue.selEle.lnk=sue.selEle.txt;
-		}
-
-
-		sue.window=window;
-		sue.document=window.document.documentElement;
-		sue.drawType=["touch","actions"];
-		var _uiarray=["direct","tip","note","allaction"];
-		var _uiset=[];
-		for(var i=0;i<_uiarray.length;i++){
-			if(config[sue.drawType[0]].ui&&config[sue.drawType[0]].ui[_uiarray[i]].enable){
-				sue.UI(config[sue.drawType[0]].ui[_uiarray[i]].style);
-			}
-		}
-	},
-	touchMove:function(e){
-		var x=e.targetTouches[0].clientX;
-		var y=e.targetTouches[0].clientY;
-		var dx=Math.abs(x-sue._lastX);
-		var dy=Math.abs(y-sue._lastY);
-		var dz=Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
-		if(dz<1){return}
-		sue.uiPos(e);
-		(config[sue.drawType[0]].ui.line.enable||editMode)?sue.ui_line(e):null;
-		if(dx<config.general.settings.minlength
-			&&dy<config.general.settings.minlength){
-			return;
-		}
-
-		var dir;
-		dir=dx>dy?(x<sue._lastX?"L":"R"):(y<sue._lastY?"U":"D"); 	
-
-		var lastDir=sue._dirArray.substr(sue._dirArray.length-1,1);
-		if(dir!=lastDir){
-			sue._dirArray+=dir;
-			//show direct
-			sue.drawType[0]!="sdrg"&&config[sue.drawType[0]].ui.direct.enable?sue.ui_direct(e):null;
-			//get tip
-			(config[sue.drawType[0]].ui.tip.enable||config[sue.drawType[0]].ui.note.enable)?sue.sendDir(sue._dirArray,"gettip",e):null;
-		}
-		//timeout
-		if(config.general.settings.timeout){
-			if(sue.timeout){window.clearTimeout(sue.timeout);sue.break=false;}
-			sue.timeout=window.setTimeout(function(){
-				sue.break=true;
-				sue.clearUI();
-			},config.general.settings.timeoutvalue)
-		}
-		sue._lastX=e.targetTouches[0].clientX;
-		sue._lastY=e.targetTouches[0].clientY;
-	},
-	touchEnd:function(e){
-		if(!sue._dirArray){return;}
-		if(sue.break){
-			sue.clearUI();
-			sue.break=false;
-			return;
-		}
-		sue.clearUI();
-		if(editMode){
-			editDirect=sue._dirArray;
-			var getele=function(ele){
-				if(ele.tagName.toLowerCase()=="smartup"&&ele.classList.contains("su_apps")){
-					return ele;
-				}else{
-					return getele(ele.parentNode);
-				}
-			}
-			var boxOBJ=getele(document.querySelector(".su_app_test"));
-			boxOBJ.querySelector(".testbox").innerText=sue._dirArray;
-		}else{
-			sue.sendDir(sue._dirArray,"action",e);
-		}	
-		sue.drawing=false;
-		if(sue.timeout){window.clearTimeout(sue.timeout);sue.break=false;}
-		sue._dirArray="";
-	},
 	lineDrawReady:function(e,type){
 		console.log("lineDrawReady");
 		console.log(e.target)
@@ -534,7 +230,7 @@ var sue={
 		}
 
 		sue.selEle={};
-		if(type=="drg"||type=="sdrg"){
+		if(type=="drg"){
 			switch(e.target.nodeType){
 				case 3:
 					sue.drawType=[type,"t"+type];
@@ -593,7 +289,7 @@ var sue={
 		}
 
 		//txt to url for drag
-		if(type!="mges"&&((config.general.fnswitch.fnsdrg&&config.sdrg.settings.drgurl)||(config.general.fnswitch.fndrg&&config.drg.settings.drgurl))){
+		if(type!="mges"&&(config.general.fnswitch.fndrg&&config.drg.settings.drgurl)){
 			if(sue.regURL(sue.selEle.txt)){
 				sue.drawType=[type,"l"+type];
 				sue.selEle.lnk=sue.selEle.txt;
@@ -642,45 +338,23 @@ var sue={
 		var dz=Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
 
 		if(dz<1){return}
-		sue.uiPos(e)
-		sue.drawType[0]!="sdrg"&&(config[sue.drawType[0]].ui.line.enable||editMode)?sue.ui_line(e):null;
+		sue.uiPos(e);
+		(config[sue.drawType[0]].ui.line.enable||editMode)?sue.ui_line(e):null;
 		if(dx<config.general.settings.minlength
 			&&dy<config.general.settings.minlength){
 			return;
 		}
 
 		var dir;
-		if(sue.drawType[0]=="sdrg"){
-			var angle=180/(Math.PI/Math.acos(dy/dz));
-
-			if(angle<=22.5&&dx<dy&&y<sue._lastY){
-				dir="U"
-			}else if(angle<=22.5&&dx<dy&&y>sue._lastY){
-				dir="D"
-			}else if(angle>67.5&&angle<=90&&dx>dy&&x>sue._lastX){
-				dir="R"
-			}else if(angle>67.5&&angle<=90&&dx>dy&&x<sue._lastX){
-				dir="L"
-			}else if(angle>22.5&&angle<=67.5&&y<sue._lastY&&x<sue._lastX){
-				dir="l"
-			}else if(angle>22.5&&angle<=67.5&&y<sue._lastY&&x>sue._lastX){
-				dir="u"
-			}else if(angle>22.5&&angle<=67.5&&y>sue._lastY&&x>sue._lastX){
-				dir="r"
-			}else if(angle>22.5&&angle<=67.5&&y>sue._lastY&&x<sue._lastX){
-				dir="d"
-			}
-		}else{
-			dir=dx>dy?(x<sue._lastX?"L":"R"):(y<sue._lastY?"U":"D");    	
-		}
+			dir=dx>dy?(x<sue._lastX?"L":"R"):(y<sue._lastY?"U":"D");
 
 		var lastDir=sue._dirArray.substr(sue._dirArray.length-1,1);
 		if(dir!=lastDir){
 			sue._dirArray+=dir;
 			//show direct
-			sue.drawType[0]!="sdrg"&&config[sue.drawType[0]].ui.direct.enable?sue.ui_direct(e):null;
+			config[sue.drawType[0]].ui.direct.enable?sue.ui_direct(e):null;
 			//get tip
-			sue.drawType[0]!="sdrg"&&(config[sue.drawType[0]].ui.tip.enable||config[sue.drawType[0]].ui.note.enable)?sue.sendDir(sue._dirArray,"gettip",e):null;
+			(config[sue.drawType[0]].ui.tip.enable||config[sue.drawType[0]].ui.note.enable)?sue.sendDir(sue._dirArray,"gettip",e):null;
 		}
 		//timeout
 		if(config.general.settings.timeout){
@@ -756,7 +430,7 @@ var sue={
 		var ui_dir=uidom.querySelector("div[data-suui=dir]");
 		if(ui_dir){
 			var _img=document.createElement("img");
-				_img.src=chrome.extension.getURL("")+"image/"+"direct.png";
+				_img.src=chrome.runtime.getURL("")+"image/"+"direct.png";
 				_img.style.cssText+="float:left;"
 					+"height:"+config[sue.drawType[0]].ui.direct.width+"px;"
 					+"transform:rotate(+"+sue.directimg(sue._dirArray[sue._dirArray.length-1])+");";
@@ -799,7 +473,7 @@ var sue={
 			if(config[sue.drawType[0]].ui.tip.withdir){
 				var _dir="";
 				for(var i=0;i<sue._dirArray.length;i++){
-					var _dir=sue.domCreate("img",{setName:["src"],setValue:[chrome.extension.getURL("")+"image/direct.png"]},null,"vertical-align: text-top;transform:rotate(+"+sue.directimg(sue._dirArray[i])+");height: "+config[sue.drawType[0]].ui.tip.width+"px;");
+					var _dir=sue.domCreate("img",{setName:["src"],setValue:[chrome.runtime.getURL("")+"image/direct.png"]},null,"vertical-align: text-top;transform:rotate(+"+sue.directimg(sue._dirArray[i])+");height: "+config[sue.drawType[0]].ui.tip.width+"px;");
 					_dom.appendChild(_dir);
 				}
 			}
@@ -854,7 +528,7 @@ var sue={
 			for(var i=0;i<confOBJ.allaction.length;i++){
 				var _allAction=sue.domCreate("div");
 				for(var ii=0;ii<confOBJ.allaction[i].direct.length;ii++){
-					var _img=sue.domCreate("img",{setName:["src"],setValue:[chrome.extension.getURL("")+"image/direct.png"]},null,"vertical-align: text-top;height:"+config[sue.drawType[0]].ui.allaction.width+"px;transform:rotate("+sue.directimg(confOBJ.allaction[i].direct[ii])+");");
+					var _img=sue.domCreate("img",{setName:["src"],setValue:[chrome.runtime.getURL("")+"image/direct.png"]},null,"vertical-align: text-top;height:"+config[sue.drawType[0]].ui.allaction.width+"px;transform:rotate("+sue.directimg(confOBJ.allaction[i].direct[ii])+");");
 					_allAction.appendChild(_img);
 				}
 				_allAction.appendChild(sue.domCreate("span",null,null,null,null,"  "+confOBJ.allaction[i].tip));
@@ -871,7 +545,7 @@ var sue={
 	},
 	domDir2:function(img){
 		var domimg=document.createElement("img");
-			domimg.src=chrome.extension.getURL("")+"image/"+"direct.png";
+			domimg.src=chrome.runtime.getURL("")+"image/"+"direct.png";
 			domimg.style.cssText+="float:left;"
 				+"height:"+config[sue.drawType[0]].ui.direct.width+"px;"
 				+"vertical-align: text-top;"
@@ -882,7 +556,7 @@ var sue={
 		if(config[sue.drawType[0]].ui.tip.withdir){
 			var domdir="";
 			for(var i=0;i<sue._dirArray.length;i++){
-				domdir+="<img src='"+chrome.extension.getURL("")+"image/"+"direct.png"+"' style='/*float:left;display:block;margin-top:5px;*/"
+				domdir+="<img src='"+chrome.runtime.getURL("")+"image/"+"direct.png"+"' style='/*float:left;display:block;margin-top:5px;*/"
 					+"vertical-align: text-top;"
 					+"transform:rotate(+"+sue.directimg(sue._dirArray[i])+");"
 					+"height: "+config[sue.drawType[0]].ui.tip.width+"px;"
@@ -986,70 +660,6 @@ var sue={
   					sue.uiPos(e);
   					break;
   				case"action":
-
-
-
-					/*function blob2canvas(blob){
-						console.log(blob)
-					    var img = new Image;
-					    var c = document.createElement("canvas");
-					    var ctx = c.getContext('2d');
-					    img.src = URL.createObjectURL(blob);
-					    console.log(img)
-					    img.onload = function () {
-					        ctx.drawImage(img,0,0);
-					    }
-						return new Promise(resolve => {
-							img.onload = function () {
-							  c.width = this.naturalWidth;
-							  c.height = this.naturalHeight;
-							  ctx.drawImage(this, 0, 0);
-							  c.toBlob((blob) => {
-							    // here the image is a blob
-							    resolve(blob)
-							  }, "image/png", 0.75);
-							};
-						})
-					}
-
-
-					var port = chrome.runtime.connect({name: "copyimg"});
-					port.postMessage({type:"copyimg",url:"https://scpic.chinaz.net/files/pic/pic9/202201/apic37788.jpg"});
-					port.onMessage.addListener(function(msg) {
-						console.log(msg)
-						async function copyImage(imageURL){
-							var _img=await fetch(imageURL);
-								_img=await _img.blob(_img);
-							var _blob = await blob2canvas(_img);
-							const item = new ClipboardItem({ "image/png": _blob });
-							navigator.clipboard.write([item]);
-						}
-						function blob2canvas(blob){
-							console.log(blob)
-							var img = new Image;
-							var c = document.createElement("canvas");
-							var ctx = c.getContext('2d');
-							img.src = URL.createObjectURL(blob);
-							console.log(img)
-							img.onload = function () {
-								ctx.drawImage(img,0,0);
-							}
-							return new Promise(resolve => {
-								img.onload = function () {
-									c.width = this.naturalWidth;
-									c.height = this.naturalHeight;
-									ctx.drawImage(this, 0, 0);
-									c.toBlob((blob) => {
-										resolve(blob)
-									}, "image/png", 0.75);
-								};
-							})
-						}
-						copyImage(msg);
-
-					});*/
-
-
   					break;
   			}
 		});
@@ -1058,7 +668,6 @@ var sue={
 chrome.runtime.onMessage.addListener(function(message,sender,sendResponse) {
 	console.log(message)
 	if(message.type=="set_confirm"){
-		// sendResponse({type:message.type,message:true});
 		if(confirm(chrome.i18n.getMessage("tip_closemulticonfirm"))){
 			sendResponse({type:message.type,message:true});
 		}
@@ -1066,33 +675,9 @@ chrome.runtime.onMessage.addListener(function(message,sender,sendResponse) {
 	if(message.type=="status"){
 		sendResponse({type:message.type,message:true})
 	}
-	if(message.type=="icon"||message.type=="pop"){//icon action
-		sue.selEle={};
-		sue.selEle.txt=window.getSelection().toString();
-		// fix firefox get selection frome textbox
-		if(browserType=="fx"){
-			if(e.target.tagName.toLowerCase=="textarea"||(e.target.tagName.toLowerCase=="input"&&e.target.type=="text")){
-				sue.selEle.txt=e.target.value.substring(e.target.selectionStart,e.target.selectionEnd);
-			}
-		}
-		console.log(sue.selEle)
-		sendResponse({type:"action_"+message.type,selEle:sue.selEle});
-	}
-	if(message.type=="extdisable"){
-		extDisable=true;
-	}
 	if(message.type=="setapptype"){
 		sue.appType[message.apptype]=true;
-	}
-	switch(message.type){
-		case"fix_switchtab"://fix contextmenu from switchtab by rges or wges
-			sue.cons.switchtab={};
-			sue.cons.switchtab.contextmenu=true;
-			sendResponse({type:message.type,message:true});
-			break;
-		case"actionPaste":
-			sue.startEle.value+=message.value.paste;
-			break;
+		sendResponse({});
 	}
 });
 chrome.runtime.sendMessage(extID,{type:"evt_getconf"},function(response){
